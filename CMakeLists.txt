@@ -133,4 +133,4 @@ if(WITH_GTEST)
 endif()
 
 install(TARGETS uno
-    LIBRARY DESTINATION bin)
+    LIBRARY DESTINATION lib)
