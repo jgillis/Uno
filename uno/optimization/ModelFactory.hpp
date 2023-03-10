@@ -4,6 +4,8 @@
 #ifndef UNO_MODELFACTORY_H
 #define UNO_MODELFACTORY_H
 
+#ifdef WITH_AMPL
+
 #include <memory>
 #include "Model.hpp"
 #include "Iterate.hpp"
@@ -14,5 +16,8 @@ class ModelFactory {
 public:
    static std::unique_ptr<Model> reformulate(const AMPLModel& ampl_model, Iterate& first_iterate, const Options& options);
 };
+
+
+#endif // WITH_AMPL
 
 #endif // UNO_MODELFACTORY_H

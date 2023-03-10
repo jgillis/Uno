@@ -1,6 +1,8 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
+#ifdef WITH_AMPL
+
 #include "ModelFactory.hpp"
 #include "EqualityConstrainedModel.hpp"
 #include "ScaledModel.hpp"
@@ -18,3 +20,5 @@ std::unique_ptr<Model> ModelFactory::reformulate(const AMPLModel& ampl_model, It
    }
    return model;
 }
+
+#endif // WITH_AMPL

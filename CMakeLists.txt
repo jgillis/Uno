@@ -24,6 +24,12 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG") # disable asserts
 option(WITH_GTEST "Enable GoogleTest" OFF)
 message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 
+option(WITH_AMPL "Enable AMPL" OFF)
+
+if (WITH_AMPL)
+    add_definitions("-DWITH_AMPL")
+endif()
+
 # directories
 set(DIRECTORIES uno)
 
@@ -107,8 +113,10 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BI
 #############
 # AMPL main #
 #############
-add_executable(uno_ampl uno/main.cpp)
-target_link_libraries(uno_ampl PUBLIC uno)
+if (WITH_AMPL)
+    add_executable(uno_ampl uno/main.cpp)
+    target_link_libraries(uno_ampl PUBLIC uno)
+endif()
 
 #########################
 # GoogleTest unit tests #
