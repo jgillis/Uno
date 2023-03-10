@@ -123,3 +123,6 @@ if(WITH_GTEST)
         target_link_libraries(run_unotest PUBLIC GTest::gtest uno)
     endif()
 endif()
+
+install(TARGETS uno
+    LIBRARY DESTINATION bin)
