@@ -9,7 +9,7 @@ LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constr
       solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.get_string("LP_solver"), options)) {
 }
 
-void LPSubproblem::initialize(Statistics& /*statistics*/, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
+void LPSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
 }
 
 void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& current_iterate) {
@@ -19,9 +19,11 @@ void LPSubproblem::evaluate_functions(const NonlinearProblem& problem, Iterate& 
    problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
 }
 
-Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate) {
-   // evaluate the functions at the current iterate
-   this->evaluate_functions(problem, current_iterate);
+Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) {
+   if (evaluate_functions) {
+      // evaluate the functions at the current iterate
+      this->evaluate_functions(problem, current_iterate);
+   }
 
    // bounds of the variable displacements
    this->set_variable_bounds(problem, current_iterate);
@@ -31,18 +33,6 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    this->set_linearized_constraint_bounds(problem, this->evaluations.constraints);
 
    return this->solve_LP(problem, current_iterate);
-}
-
-Direction LPSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
-   // TODO warm start
-   DEBUG << "\nEntered SOC computation\n";
-   assert(false && "Not implemented yet");
-   /*
-   // shift the RHS with the values of the constraints at the trial iterate
-   problem.evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
-   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.subproblem_evaluations.constraints);
-   return this->solve_LP(problem, trial_iterate);
-   */
 }
 
 Direction LPSubproblem::solve_LP(const NonlinearProblem& problem, Iterate& iterate) {

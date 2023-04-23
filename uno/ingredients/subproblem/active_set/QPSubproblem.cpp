@@ -4,22 +4,22 @@
 #include "QPSubproblem.hpp"
 #include "solvers/QP/QPSolverFactory.hpp"
 
-QPSubproblem::QPSubproblem(size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros, const Options& options) :
+QPSubproblem::QPSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
+         const Options& options) :
       ActiveSetSubproblem(max_number_variables, max_number_constraints),
-      use_regularization(options.get_string("mechanism") != "TR"),
-      // if no trust region is used, the problem should be convexified to guarantee boundedness + descent direction
+      use_regularization(options.get_string("globalization_mechanism") != "TR"),
+      // if no trust region is used, the problem should be convexified to guarantee boundedness
       hessian_model(HessianModelFactory::create(options.get_string("hessian_model"), max_number_variables,
             max_number_hessian_nonzeros + max_number_variables, this->use_regularization, options)),
       // maximum number of Hessian nonzeros = number nonzeros + possible diagonal inertia correction
       solver(QPSolverFactory::create(options.get_string("QP_solver"), max_number_variables, max_number_constraints,
-            hessian_model->hessian->capacity, true, options)),
-      statistics_regularization_column_order(options.get_int("statistics_regularization_column_order")) {
+            hessian_model->hessian->capacity, true, options)) {
+   if (this->use_regularization) {
+      statistics.add_column("regularization", Statistics::double_width, options.get_int("statistics_regularization_column_order"));
+   }
 }
 
-void QPSubproblem::initialize(Statistics& statistics, const NonlinearProblem& /*problem*/, Iterate& /*first_iterate*/) {
-   if (this->use_regularization) {
-      statistics.add_column("regularization", Statistics::double_width, this->statistics_regularization_column_order);
-   }
+void QPSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
 }
 
 void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
@@ -31,9 +31,11 @@ void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearPro
    problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
 }
 
-Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
-   // evaluate the functions at the current iterate
-   this->evaluate_functions(statistics, problem, current_iterate);
+Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) {
+   if (evaluate_functions) {
+      // evaluate the functions at the current iterate
+      this->evaluate_functions(statistics, problem, current_iterate);
+   }
 
    // bounds of the variable displacements
    this->set_variable_bounds(problem, current_iterate);
@@ -43,18 +45,6 @@ Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& pr
    this->set_linearized_constraint_bounds(problem, this->evaluations.constraints);
 
    return this->solve_QP(problem, current_iterate);
-}
-
-Direction QPSubproblem::compute_second_order_correction(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
-   // TODO warm start
-   DEBUG << "\nEntered SOC computation\n";
-   assert(false && "Not implemented yet");
-   /*
-   // shift the RHS with the values of the constraints at the trial iterate
-   problem.evaluate_constraints(trial_iterate, trial_iterate.subproblem_evaluations.constraints);
-   ActiveSetSubproblem::shift_linearized_constraint_bounds(problem, trial_iterate.subproblem_evaluations.constraints);
-   return this->solve_QP(problem, trial_iterate);
-    */
 }
 
 Direction QPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& iterate) {

@@ -20,20 +20,19 @@ struct l1RelaxationParameters {
 
 class l1Relaxation : public ConstraintRelaxationStrategy {
 public:
-   l1Relaxation(const Model& model, const Options& options);
-   void initialize(Statistics& statistics, Iterate& first_iterate) override;
+   l1Relaxation(Statistics& statistics, const Model& model, const Options& options);
+   void initialize(Iterate& initial_iterate) override;
 
    void set_trust_region_radius(double trust_region_radius) override;
 
    // direction computation
-   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate) override;
+   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) override;
+   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) override;
    [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         const std::vector<double>& initial_point) override;
-   [[nodiscard]] Direction compute_second_order_correction(Iterate& trial_iterate) override;
+         const std::vector<double>& initial_point, bool evaluate_functions) override;
 
    // trial iterate acceptance
-   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction) override;
+   void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
 
@@ -51,12 +50,10 @@ protected:
    const double l1_constraint_violation_coefficient;
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
-   // statistics table
-   int statistics_penalty_parameter_column_order;
 
-   Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem);
-   Direction solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter);
-   Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate);
+   Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem, bool evaluate_functions);
+   Direction solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter, bool evaluate_functions);
+   Direction solve_with_steering_rule(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions);
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
    [[nodiscard]] bool objective_sufficient_decrease(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;

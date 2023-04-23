@@ -13,7 +13,6 @@ project(Uno VERSION 1.0
 
 # set C++17 and enable other languages
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_BUILD_TYPE Debug)
 enable_language(CXX C Fortran)
 
 set(CMAKE_CXX_FLAGS "-fPIC -Wall -Wextra -Wnon-virtual-dtor -pedantic -Wunused-value -Wconversion -Wmaybe-uninitialized")
@@ -99,7 +98,7 @@ find_package(OpenMP REQUIRED)
 list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
 
 #######
-# Uno #
+# Uno #
 #######
 add_library(uno STATIC ${UNO_SOURCE_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
@@ -111,7 +110,7 @@ target_link_libraries(uno PUBLIC ${LIBRARIES})
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 #############
-# AMPL main #
+# AMPL main #
 #############
 if (WITH_AMPL)
     add_executable(uno_ampl uno/main.cpp)

@@ -27,6 +27,10 @@ void ActiveSetSubproblem::set_elastic_variable_values(const l1RelaxedProblem& pr
    problem.set_elastic_variable_values(current_iterate, elastic_setting_function);
 }
 
+void ActiveSetSubproblem::exit_feasibility_problem(const NonlinearProblem& /*problem*/, Iterate& /*trial_iterate*/) {
+   // do nothing
+}
+
 void ActiveSetSubproblem::set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate) {
    for (size_t i: Range(problem.number_variables)) {
       const double lb = this->variable_bounds[i].lb - current_iterate.primals[i];
@@ -40,14 +44,6 @@ void ActiveSetSubproblem::set_linearized_constraint_bounds(const NonlinearProble
       const double lb = problem.get_constraint_lower_bound(j) - current_constraints[j];
       const double ub = problem.get_constraint_upper_bound(j) - current_constraints[j];
       this->linearized_constraint_bounds[j] = {lb, ub};
-   }
-}
-
-void ActiveSetSubproblem::shift_linearized_constraint_bounds(const NonlinearProblem& problem, const std::vector<double>& trial_constraints) {
-   // shift the RHS with the values of the constraints at the trial iterate
-   for (size_t j: Range(problem.number_constraints)) {
-      this->linearized_constraint_bounds[j].lb -= trial_constraints[j];
-      this->linearized_constraint_bounds[j].ub -= trial_constraints[j];
    }
 }
 
@@ -72,5 +68,5 @@ double ActiveSetSubproblem::generate_predicted_auxiliary_reduction_model(const N
    //}, "0"};
 }
 
-void ActiveSetSubproblem::postprocess_accepted_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
+void ActiveSetSubproblem::postprocess_iterate(const NonlinearProblem& /*problem*/, Iterate& /*iterate*/) {
 }

@@ -3,15 +3,16 @@
 
 #include "LeyfferFilterStrategy.hpp"
 
-LeyfferFilterStrategy::LeyfferFilterStrategy(const Options& options): FilterStrategy(options) {
+LeyfferFilterStrategy::LeyfferFilterStrategy(Statistics& /*statistics*/, const Options& options): FilterStrategy(options) {
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
  * filter methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool LeyfferFilterStrategy::is_iterate_acceptable(const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures,
-      const ProgressMeasures& predicted_reduction, double /*objective_multiplier*/) {
+bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
+      const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
+      double /*objective_multiplier*/) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
    const double trial_optimality_measure = trial_progress_measures.optimality(1.) + trial_progress_measures.auxiliary_terms;
    // unconstrained predicted reduction:
@@ -42,6 +43,7 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(const ProgressMeasures& curren
                trial_optimality_measure);
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
 
+         // switching condition: the unconstrained predicted reduction is sufficiently positive
          if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
             // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
             if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {

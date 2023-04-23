@@ -16,9 +16,9 @@ FilterStrategy::FilterStrategy(const Options& options) :
       }) {
 }
 
-void FilterStrategy::initialize(const Iterate& first_iterate) {
+void FilterStrategy::initialize(const Iterate& initial_iterate) {
    // set the filter upper bound
-   double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * first_iterate.progress.infeasibility);
+   double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * initial_iterate.progress.infeasibility);
    this->filter->upper_bound = upper_bound;
    this->initial_filter_upper_bound = upper_bound;
 }
@@ -32,17 +32,12 @@ void FilterStrategy::reset() {
 
 void FilterStrategy::register_current_progress(const ProgressMeasures& current_progress_measures) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
+   DEBUG << "Adding element to the filter\n";
    this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
 }
 
 bool FilterStrategy::is_infeasibility_acceptable(double infeasibility_measure) const {
-   if (not this->filter->is_empty()) {
-      // accept if the infeasibility measure improves upon the smallest filter infeasibility
-      return (infeasibility_measure < this->filter->get_smallest_infeasibility());
-   }
-   else { // filter empty
-      return this->filter->acceptable_wrt_upper_bound(infeasibility_measure);
-   }
+   return (infeasibility_measure < this->filter->get_smallest_infeasibility());
 }
 
 bool FilterStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {

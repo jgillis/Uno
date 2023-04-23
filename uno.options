@@ -23,7 +23,7 @@ statistics_print_header_every_iterations 15
 statistics_major_column_order 1
 statistics_minor_column_order 2
 statistics_restoration_phase_column_order 4
-statistics_penalty_parameter_column_order 4
+statistics_penalty_parameter_column_order 5
 statistics_regularization_column_order 6
 statistics_barrier_parameter_column_order 8
 statistics_SOC_column_order 9
@@ -37,17 +37,17 @@ statistics_complementarity_column_order 104
 statistics_stationarity_column_order 105
 
 ##### ingredients #####
-# default subproblem (QP|LP|barrier)
+# default constraint relaxation strategy (feasibility_restoration|l1_relaxation)
+constraint_relaxation_strategy feasibility_restoration
+
+# default subproblem (QP|LP|primal_dual_interior_point)
 subproblem QP
 
-# default globalization strategy (l1-penalty|leyffer-filter-strategy|waechter-filter-strategy)
-strategy leyffer-filter-strategy
-
-# default constraint relaxation strategy (feasibility-restoration|l1-relaxation)
-constraint-relaxation feasibility-restoration
+# default globalization strategy (l1_merit|leyffer_filter_strategy|waechter_filter_strategy)
+globalization_strategy leyffer_filter_strategy
 
 # default globalization mechanism (TR|LS)
-mechanism TR
+globalization_mechanism TR
 
 ##### main options #####
 # logging level (INFO|DEBUG)

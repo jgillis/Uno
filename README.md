@@ -35,7 +35,7 @@ Uno 1.0 implements the following strategies:
 For more details, check out my [presentation at the ICCOPT 2022 conference](https://www.researchgate.net/publication/362254109).
 This is joint work with [Sven Leyffer](https://wiki.mcs.anl.gov/leyffer/index.php/Sven_Leyffer) (Argonne National Laboratory).
 
-### Latest results (Jan 25, 2023)
+### Latest results (Mar 15, 2023)
 
 Some of Uno combinations (called presets, see below) have been tested against state-of-the-art solvers on 429 small problems of the [CUTEst benchmark](https://arnold-neumaier.at/glopt/coconut/Benchmark/Library2_new_v1.html).
 The figure below is a performance profile; it shows how many problems are solved for a given budget of function evaluations (1 time, 2 times, 4 times, ..., $2^x$ times the number of objective evaluations of the best solver for each instance).
@@ -70,13 +70,13 @@ Uno is released under the MIT license (see the [license file](LICENSE)).
     * MA57 (sparse indefinite symmetric linear solver): http://www.hsl.rl.ac.uk/catalogue/ma57.html
 
 * install BLAS and LAPACK: ```sudo apt-get install libblas-dev liblapack-dev```
-* install cmake and ccmake (CMake curses interface): ```sudo apt-get install cmake cmake-curses-gui```
+* install cmake (and optionally ccmake, CMake curses interface): ```sudo apt-get install cmake cmake-curses-gui```
 
 ### Compilation
 
 1. Create a `build` directory in the main directory: ```mkdir build```
 2. Move to the build directory: ```cd build/```
-3. Type cmake: ```cmake ..```
+3. Type cmake (``Release`` can be replaced with ``Debug``): ```cmake -DCMAKE_BUILD_TYPE=Release ..```
 4. **(optional)** Use ccmake to provide the paths to the required and optional libraries: ```ccmake ..```
 5. Compile (in parallel: `n` being the number of threads, e.g. 6): ```make -jn```
 
