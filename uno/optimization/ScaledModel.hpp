@@ -10,6 +10,8 @@
 class ScaledModel: public Model {
 public:
    ScaledModel(std::unique_ptr<Model> original_model, Iterate& first_iterate, const Options& options);
+   ~ScaledModel();
+
 
    [[nodiscard]] double get_variable_lower_bound(size_t i) const override;
    [[nodiscard]] double get_variable_upper_bound(size_t i) const override;
