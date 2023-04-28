@@ -135,6 +135,22 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["residual_norm"] = "L1";
       options["sparse_format"] = "CSC";
    }
+   else if (preset_name == "funnelsqp") {
+      options["constraint_relaxation_strategy"] = "feasibility_restoration";
+      options["subproblem"] = "QP";
+      options["globalization_mechanism"] = "TR";
+      options["globalization_strategy"] = "funnel_strategy";
+      options["filter_type"] = "standard";
+      options["progress_norm"] = "L1";
+      options["residual_norm"] = "L2";
+      options["sparse_format"] = "CSC";
+      options["TR_radius"] = "10";
+      options["l1_constraint_violation_coefficient"] = "1.";
+      options["enforce_linear_constraints"] = "yes";
+      options["tolerance"] = "1e-6";
+      options["terminate_with_small_step"] = "yes";
+      options["small_step_threshold"] = "1e-6";
+   }
 }
 
 void get_command_line_options(int argc, char* argv[], Options& options) {
