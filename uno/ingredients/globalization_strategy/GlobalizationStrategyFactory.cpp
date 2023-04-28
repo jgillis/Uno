@@ -5,6 +5,7 @@
 #include "l1MeritFunction.hpp"
 #include "filter_strategy/LeyfferFilterStrategy.hpp"
 #include "filter_strategy/WaechterFilterStrategy.hpp"
+#include "funnel_strategy/FunnelStrategy.hpp"
 
 std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Statistics& statistics, const std::string& strategy_type,
       const Options& options) {
@@ -16,6 +17,9 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Sta
    }
    else if (strategy_type == "waechter_filter_strategy") {
       return std::make_unique<WaechterFilterStrategy>(statistics, options);
+   }
+   else if (strategy_type == "funnel_strategy") {
+      return std::make_unique<LeyfferFilterStrategy>(statistics, options);
    }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }
