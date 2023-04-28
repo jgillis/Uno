@@ -6,6 +6,7 @@
 
 #include "Model.hpp"
 #include "preprocessing/Scaling.hpp"
+#include <memory>
 
 class ScaledModel: public Model {
 public:
