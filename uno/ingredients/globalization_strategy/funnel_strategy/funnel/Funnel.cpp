@@ -3,58 +3,58 @@
 
 #include <iostream>
 #include <algorithm>
-#include "Filter.hpp"
+#include "Funnel.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Range.hpp"
 
-Filter::Filter(const Options& options) :
-      capacity(options.get_unsigned_int("filter_capacity")),
+Funnel::Funnel(const Options& options) :
+      capacity(options.get_unsigned_int("funnel_capacity")),
       infeasibility(this->capacity),
       optimality(this->capacity),
       parameters({
-         options.get_double("filter_beta"),
-         options.get_double("filter_gamma")
+         options.get_double("funnel_beta"),
+         options.get_double("funnel_gamma")
       }) {
    this->reset();
 }
 
-void Filter::reset() {
+void Funnel::reset() {
    this->upper_bound = INF<double>;
    this->number_entries = 0;
 }
 
-bool Filter::is_empty() const {
+bool Funnel::is_empty() const {
    return (this->number_entries == 0);
 }
 
-double Filter::get_smallest_infeasibility() const {
+double Funnel::get_smallest_infeasibility() const {
    if (not this->is_empty()) {
       // left-most entry has the lowest infeasibility. Relax it with the envelope coefficient
       return this->parameters.beta * this->infeasibility[0];
    }
-   else { // filter empty
+   else { // funnel empty
       return this->parameters.beta * this->upper_bound;
    }
 }
 
-void Filter::left_shift(size_t start, size_t shift_size) {
+void Funnel::left_shift(size_t start, size_t shift_size) {
    for (size_t position: Range(start, this->number_entries - shift_size)) {
       this->infeasibility[position] = this->infeasibility[position + shift_size];
       this->optimality[position] = this->optimality[position + shift_size];
    }
 }
 
-void Filter::right_shift(size_t start, size_t shift_size) {
+void Funnel::right_shift(size_t start, size_t shift_size) {
    for (size_t position: Range<BACKWARD>(this->number_entries, start)) {
       this->infeasibility[position] = this->infeasibility[position - shift_size];
       this->optimality[position] = this->optimality[position - shift_size];
    }
 }
 
-//  add (infeasibility_measure, optimality_measure) to the filter
-void Filter::add(double infeasibility_measure, double optimality_measure) {
-   // remove dominated filter entries
-   // find position in filter without margin
+//  add (infeasibility_measure, optimality_measure) to the funnel
+void Funnel::add(double infeasibility_measure, double optimality_measure) {
+   // remove dominated funnel entries
+   // find position in funnel without margin
    size_t start_position = 0;
    while (start_position < this->number_entries && this->infeasibility[start_position] < infeasibility_measure) {
       start_position++;
@@ -66,7 +66,7 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
       end_position++;
    }
 
-   // remove entries [position:end_position] from filter
+   // remove entries [position:end_position] from funnel
    const size_t number_redundant_entries = end_position - start_position;
    if (0 < number_redundant_entries) {
       this->left_shift(start_position, number_redundant_entries);
@@ -76,11 +76,11 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
    // check sufficient space available for new entry (remove last entry, if not)
    if (this->number_entries >= this->capacity) {
       this->upper_bound = this->parameters.beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
-      // create space in filter: remove last entry
+      // create space in funnel: remove last entry
       this->number_entries--;
    }
 
-   // add new entry to the filter at position
+   // add new entry to the funnel at position
    start_position = 0;
    while (start_position < this->number_entries && infeasibility_measure >= this->parameters.beta * this->infeasibility[start_position]) {
       start_position++;
@@ -89,21 +89,21 @@ void Filter::add(double infeasibility_measure, double optimality_measure) {
    if (start_position < this->number_entries) {
       this->right_shift(start_position, 1);
    }
-   // add new entry to filter
+   // add new entry to funnel
    this->infeasibility[start_position] = infeasibility_measure;
    this->optimality[start_position] = optimality_measure;
    this->number_entries++;
 }
 
-bool Filter::acceptable_wrt_upper_bound(double infeasibility_measure) const {
+bool Funnel::acceptable_wrt_upper_bound(double infeasibility_measure) const {
    return (infeasibility_measure < this->parameters.beta * this->upper_bound);
 }
 
 // return true if (infeasibility_measure, optimality_measure) acceptable, false otherwise
-bool Filter::acceptable(double infeasibility_measure, double optimality_measure) {
+bool Funnel::acceptable(double infeasibility_measure, double optimality_measure) {
    // check upper bound first
    if (not this->acceptable_wrt_upper_bound(infeasibility_measure)) {
-      DEBUG << "Rejected because of filter upper bound\n";
+      DEBUG << "Rejected because of funnel upper bound\n";
       return false;
    }
 
@@ -121,27 +121,27 @@ bool Filter::acceptable(double infeasibility_measure, double optimality_measure)
    else if (optimality_measure <= this->optimality[position - 1] - this->parameters.gamma * infeasibility_measure) {
       return true; // point acceptable
    }
-   DEBUG << "Rejected because of filter domination\n";
+   DEBUG << "Rejected because of funnel domination\n";
    return false;
 }
 
 //! check acceptability wrt current point
-bool Filter::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
+bool Funnel::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
       double trial_optimality_measure) {
    return (trial_optimality_measure <= current_optimality_measure - this->parameters.gamma * trial_infeasibility_measure) ||
           (trial_infeasibility_measure < this->parameters.beta * current_infeasibility_measure);
 }
 
-double Filter::compute_actual_reduction(double current_optimality_measure, double /*current_infeasibility_measure*/, double trial_optimality_measure) {
+double Funnel::compute_actual_reduction(double current_optimality_measure, double /*current_infeasibility_measure*/, double trial_optimality_measure) {
    return current_optimality_measure - trial_optimality_measure;
 }
 
-//! print: print the content of the filter
-std::ostream& operator<<(std::ostream& stream, Filter& filter) {
+//! print: print the content of the funnel
+std::ostream& operator<<(std::ostream& stream, Funnel& funnel) {
    stream << "************\n";
-   stream << "  Current filter (infeasibility, optimality):\n";
-   for (size_t position: Range(filter.number_entries)) {
-      stream << "\t" << filter.infeasibility[position] << "\t\t" << filter.optimality[position] << '\n';
+   stream << "  Current funnel (infeasibility, optimality):\n";
+   for (size_t position: Range(funnel.number_entries)) {
+      stream << "\t" << funnel.infeasibility[position] << "\t\t" << funnel.optimality[position] << '\n';
    }
    stream << "************\n";
    return stream;

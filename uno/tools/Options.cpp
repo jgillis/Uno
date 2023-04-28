@@ -150,6 +150,13 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["tolerance"] = "1e-6";
       options["terminate_with_small_step"] = "yes";
       options["small_step_threshold"] = "1e-6";
+      options["funnel_beta"] = "0.999";
+      options["funnel_gamma"] = "0.001";
+      options["funnel_delta"] = "0.999";
+      options["funnel_ubd"] = "1e2";
+      options["funnel_fact"] = "1.25";
+      options["funnel_switching_infeasibility_exponent"] = "2";
+      options["funnel_capacity"] = "50";
    }
 }
 

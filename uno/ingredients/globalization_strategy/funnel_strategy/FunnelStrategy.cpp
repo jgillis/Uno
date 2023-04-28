@@ -2,43 +2,109 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cmath>
-#include "FilterStrategy.hpp"
-#include "filter/FilterFactory.hpp"
+#include "FunnelStrategy.hpp"
+#include "funnel/FunnelFactory.hpp"
 
-FilterStrategy::FilterStrategy(const Options& options) :
+FunnelStrategy::FunnelStrategy(Statistics& /*statistics*/, const Options& options) :
       GlobalizationStrategy(options),
-      filter(FilterFactory::create(options)),
+      funnel(FunnelFactory::create(options)),
       parameters({
-         options.get_double("filter_delta"),
-         options.get_double("filter_ubd"),
-         options.get_double("filter_fact"),
-         options.get_double("filter_switching_infeasibility_exponent")
+         options.get_double("funnel_delta"),
+         options.get_double("funnel_ubd"),
+         options.get_double("funnel_fact"),
+         options.get_double("funnel_switching_infeasibility_exponent")
       }) {
 }
 
-void FilterStrategy::initialize(const Iterate& initial_iterate) {
-   // set the filter upper bound
+void FunnelStrategy::initialize(const Iterate& initial_iterate) {
+   // set the funnel upper bound
    double upper_bound = std::max(this->parameters.upper_bound, this->parameters.infeasibility_fraction * initial_iterate.progress.infeasibility);
-   this->filter->upper_bound = upper_bound;
-   this->initial_filter_upper_bound = upper_bound;
+   this->funnel->upper_bound = upper_bound;
+   this->initial_funnel_upper_bound = upper_bound;
 }
 
-void FilterStrategy::reset() {
-   // re-initialize the restoration filter
-   this->filter->reset();
-   // TODO: we should set the ub of the optimality filter. But now, our 2 filters live independently...
-   this->filter->upper_bound = this->initial_filter_upper_bound;
+void FunnelStrategy::reset() {
+   // re-initialize the restoration funnel
+   this->funnel->reset();
+   // TODO: we should set the ub of the optimality funnel. But now, our 2 funnels live independently...
+   this->funnel->upper_bound = this->initial_funnel_upper_bound;
 }
 
-void FilterStrategy::register_current_progress(const ProgressMeasures& current_progress_measures) {
+void FunnelStrategy::register_current_progress(const ProgressMeasures& current_progress_measures) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
-   this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
+   this->funnel->add(current_progress_measures.infeasibility, current_optimality_measure);
 }
 
-bool FilterStrategy::is_infeasibility_acceptable(double infeasibility_measure) const {
-   return (infeasibility_measure < this->filter->get_smallest_infeasibility());
+bool FunnelStrategy::is_infeasibility_acceptable(double infeasibility_measure) const {
+   return (infeasibility_measure < this->funnel->get_smallest_infeasibility());
 }
 
-bool FilterStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
+bool FunnelStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
    return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
+}
+
+/* check acceptability of step(s) (funnel & sufficient reduction)
+ * funnel methods enforce an *unconstrained* sufficient decrease condition
+ * precondition: feasible step
+ * */
+bool FunnelStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
+      const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
+      double /*objective_multiplier*/) {
+   const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
+   const double trial_optimality_measure = trial_progress_measures.optimality(1.) + trial_progress_measures.auxiliary_terms;
+   // unconstrained predicted reduction:
+   // - ignore the predicted infeasibility reduction
+   // - scale the scaled optimality measure with 1
+   const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
+   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t ω = " << current_optimality_measure << '\n';
+   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_optimality_measure << '\n';
+   DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
+         " = " <<  unconstrained_predicted_reduction << '\n';
+
+   GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);
+   GlobalizationStrategy::check_finiteness(trial_progress_measures, 1.);
+   DEBUG << *this->funnel << '\n';
+
+   bool accept = false;
+   // check acceptance
+   const bool funnel_acceptable = this->funnel->acceptable(trial_progress_measures.infeasibility, trial_optimality_measure);
+   if (funnel_acceptable) {
+      DEBUG << "Filter acceptable\n";
+
+      // check acceptance wrt current point
+      const bool improves_current_iterate = this->funnel->acceptable_wrt_current_iterate(current_progress_measures.infeasibility,
+            current_optimality_measure, trial_progress_measures.infeasibility, trial_optimality_measure);
+      if (improves_current_iterate) {
+         DEBUG << "Acceptable with respect to current point\n";
+         const double actual_reduction = this->funnel->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
+               trial_optimality_measure);
+         DEBUG << "Actual reduction: " << actual_reduction << '\n';
+
+         // switching condition: the unconstrained predicted reduction is sufficiently positive
+         if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
+            // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
+            if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
+               DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
+               accept = true;
+            }
+            else { // switching condition holds, but not Armijo condition
+               DEBUG << "Armijo condition not satisfied, trial iterate rejected\n";
+            }
+         }
+         else { // switching condition violated: predicted reduction is not promising
+            this->funnel->add(current_progress_measures.infeasibility, current_optimality_measure);
+            DEBUG << "Trial iterate was accepted by violating switching condition\n";
+            DEBUG << "Current iterate was added to the funnel\n";
+            accept = true;
+         }
+      }
+      else {
+         DEBUG << "Not acceptable with respect to current point\n";
+      }
+   }
+   else {
+      DEBUG << "Not funnel acceptable\n";
+   }
+   DEBUG << '\n';
+   return accept;
 }

@@ -19,11 +19,11 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Sta
       return std::make_unique<WaechterFilterStrategy>(statistics, options);
    }
    else if (strategy_type == "funnel_strategy") {
-      return std::make_unique<LeyfferFilterStrategy>(statistics, options);
+      return std::make_unique<FunnelStrategy>(statistics, options);
    }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }
 
 std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-   return {"l1_merit", "leyffer_filter_strategy", "waechter_filter_strategy"};
+   return {"l1_merit", "leyffer_filter_strategy", "waechter_filter_strategy", "funnel_strategy"};
 }

@@ -33,6 +33,8 @@ file(GLOB UNO_SOURCE_FILES
     uno/ingredients/globalization_strategy/*.cpp
     uno/ingredients/globalization_strategy/filter_strategy/*.cpp
     uno/ingredients/globalization_strategy/filter_strategy/filter/*.cpp
+    uno/ingredients/globalization_strategy/funnel_strategy/*.cpp
+    uno/ingredients/globalization_strategy/funnel_strategy/funnel/*.cpp
     uno/ingredients/constraint_relaxation_strategy/*.cpp
     uno/ingredients/subproblem/*.cpp
     uno/ingredients/subproblem/active_set/*.cpp
