@@ -15,6 +15,8 @@
  *  Set of constants to control the funnel strategy
  */
 struct FunnelStrategyParameters {
+   double kappa_initial_upper_bound;
+   double kappa_initial_multiplication;
    double delta; /*!< Switching constant */
    double upper_bound;
    double infeasibility_fraction;
@@ -36,8 +38,6 @@ public:
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress_measures) override;
-
-
 
 protected:
    // pointer to allow polymorphism
