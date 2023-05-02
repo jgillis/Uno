@@ -38,7 +38,7 @@ void ConvexifiedHessian::evaluate(Statistics& statistics, const NonlinearProblem
    problem.evaluate_lagrangian_hessian(primal_variables, constraint_multipliers, *this->hessian);
    this->evaluation_count++;
    // regularize (only on the original variables) to make the problem strictly convex
-   DEBUG << "hessian before convexification: " << *this->hessian;
+   DEBUG2 << "hessian before convexification: " << *this->hessian;
    this->regularize(statistics, *this->hessian, problem.get_number_original_variables());
 }
 
@@ -57,7 +57,9 @@ void ConvexifiedHessian::regularize(Statistics& statistics, SymmetricMatrix<doub
    while (not good_inertia) {
       DEBUG << "Testing factorization with regularization factor " << regularization_factor << '\n';
       if (0. < regularization_factor) {
-         hessian.set_regularization([&](size_t i) { return (i < number_original_variables) ? regularization_factor : 0.; });
+         hessian.set_regularization([=](size_t i) {
+            return (i < number_original_variables) ? regularization_factor : 0.;
+         });
       }
       // TODO check if sparsity pattern changes. If not, perform symbolic factorization once
       this->linear_solver->do_symbolic_factorization(hessian);
