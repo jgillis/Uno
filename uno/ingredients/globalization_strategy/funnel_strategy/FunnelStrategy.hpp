@@ -23,6 +23,8 @@ struct FunnelStrategyParameters {
    double switching_infeasibility_exponent;
 };
 
+// enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
+
 /*! \class FunnelStrategy
  * \brief Step acceptance strategy based on a funnel
  *
@@ -44,6 +46,7 @@ protected:
    const std::unique_ptr<Funnel> funnel;
    double initial_funnel_upper_bound{INF<double>};
    const FunnelStrategyParameters parameters; /*!< Set of constants */
+
 
    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
 };

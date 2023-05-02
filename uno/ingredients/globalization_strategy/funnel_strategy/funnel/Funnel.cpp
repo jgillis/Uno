@@ -21,8 +21,14 @@ Funnel::Funnel(const Options& options) :
    this->reset();
 }
 
+void Funnel::initialize(){
+   this->current_upper_bound = this->initial_upper_bound;
+   std::cout << "Initial funnel parameter is: " << this->current_upper_bound << std::endl; 
+}
+
 void Funnel::reset() {
-   this->current_upper_bound = INF<double>;
+   // this->current_upper_bound = INF<double>;
+   this->current_upper_bound = this->initial_upper_bound;
    this->number_entries = 0;
 }
 
@@ -30,6 +36,9 @@ void Funnel::update_funnel_parameter(double current_infeasibility_measure, doubl
 
    this->current_upper_bound = std::max(this->parameters.kappa_infeasibility_1 *this->current_upper_bound, 
       trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
+
+   std::cout << "Current funnel parameter is: " << this->current_upper_bound << std::endl; 
+   
 }
 
 // bool Funnel::is_empty() const {

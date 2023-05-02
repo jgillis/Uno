@@ -26,6 +26,7 @@ public:
    void reset();
    // [[nodiscard]] double get_smallest_infeasibility() const;
    virtual void add(double infeasibility_measure, double optimality_measure);
+   virtual void initialize();
    
    virtual void update_funnel_parameter(double current_infeasibility_measure, double trial_infeasibility_measure);
 
@@ -36,6 +37,7 @@ public:
    virtual double compute_actual_reduction(double current_optimality_measure, double current_infeasibility_measure, double trial_optimality_measure);
 
    friend std::ostream& operator<<(std::ostream& stream, Funnel& funnel);
+
 
 protected:
    double current_upper_bound; // funnel parameter

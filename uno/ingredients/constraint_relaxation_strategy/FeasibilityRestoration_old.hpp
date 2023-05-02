@@ -12,9 +12,9 @@
 
 // enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
-class FeasibilityRestoration : public ConstraintRelaxationStrategy {
+class FeasibilityRestorationOld : public ConstraintRelaxationStrategy {
 public:
-   FeasibilityRestoration(Statistics& statistics, const Model& model, const Options& options);
+   FeasibilityRestorationOld(Statistics& statistics, const Model& model, const Options& options);
    void initialize(Iterate& initial_iterate) override;
 
    void set_trust_region_radius(double trust_region_radius) override;
@@ -37,9 +37,8 @@ private:
    const OptimalityProblem optimality_problem;
    l1RelaxedProblem feasibility_problem;
    std::unique_ptr<Subproblem> subproblem;
-//    const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
-//    const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
-   const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
+   const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
+   const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
    const double l1_constraint_violation_coefficient;
    const double tolerance;

@@ -13,6 +13,9 @@
 /*! \class GlobalizationStrategy
  *  Ingredient that accepts or rejects a trial iterate
  */
+
+enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
+
 class GlobalizationStrategy {
 public:
    explicit GlobalizationStrategy(const Options& options);
@@ -25,10 +28,15 @@ public:
 
    virtual void reset() = 0;
    virtual void register_current_progress(const ProgressMeasures& current_progress) = 0;
+   // void set_phase(Phase new_phase);
+   // Phase get_phase();
+   // Phase current_phase;
+   int current_phase;
 
 protected:
    const double armijo_decrease_fraction; /*!< Sufficient reduction constant */
    const double armijo_tolerance;
+
 
    [[nodiscard]] bool armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const;
    static void check_finiteness(const ProgressMeasures& progress, double objective_multiplier);
