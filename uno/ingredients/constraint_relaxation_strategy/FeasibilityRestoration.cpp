@@ -51,7 +51,7 @@ Direction FeasibilityRestoration::compute_feasible_direction(Statistics& statist
 
 Direction FeasibilityRestoration::solve_optimality_problem(Statistics& statistics, Iterate& current_iterate, bool evaluate_functions) {
    // solve the subproblem
-   DEBUG << "Solving the optimality subproblem\n";
+   DEBUG << "\t\tSolving the optimality subproblem\n";
 
    evaluate_functions = evaluate_functions || this->force_function_evaluation;
    Direction direction = this->subproblem->solve(statistics, this->optimality_problem, current_iterate, evaluate_functions);
@@ -95,7 +95,7 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
       double step_length) {
    // refresh the auxiliary measure for the current iterate
    if (this->subproblem->subproblem_definition_changed) {
-      DEBUG << "The subproblem definition changed, the auxiliary measure is recomputed\n";
+      DEBUG << "\t\tThe subproblem definition changed, the auxiliary measure is recomputed\n";
       // this->globalization_strategy->reset();
       // this->restoration_phase_strategy->reset();
       // this->optimality_phase_strategy->reset();
@@ -127,12 +127,12 @@ void FeasibilityRestoration::compute_progress_measures(Iterate& current_iterate,
 }
 
 void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_iterate) {
-   DEBUG << "Switching from optimality to restoration phase\n";
+   DEBUG << "\t\tSwitching from optimality to restoration phase\n";
 
    this->current_phase = Phase::FEASIBILITY_RESTORATION;
    // this->globalization_strategy->set_phase(Phase::FEASIBILITY_RESTORATION);
    this->globalization_strategy->current_phase = 1;
-   std::cout << "Phase in funnel mechanism" << static_cast<int>(this->globalization_strategy->current_phase) << std::endl;
+   DEBUG << "\t\tPhase in funnel mechanism" << static_cast<int>(this->globalization_strategy->current_phase) << "\n";
 
    // this->optimality_phase_strategy->register_current_progress(current_iterate.progress);
    this->subproblem->initialize_feasibility_problem();
@@ -150,7 +150,7 @@ void FeasibilityRestoration::switch_to_feasibility_restoration(Iterate& current_
 }
 
 void FeasibilityRestoration::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {
-   DEBUG << "Switching from restoration to optimality phase\n";
+   DEBUG << "\t\tSwitching from restoration to optimality phase\n";
 
    this->current_phase = Phase::OPTIMALITY;
    // this->globalization_strategy->set_phase(Phase::OPTIMALITY);
@@ -174,7 +174,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
 
    bool accept = false;
    if (this->is_small_step(direction)) {
-      DEBUG << "Small step acceptable\n";
+      DEBUG << "\t\tSmall step acceptable\n";
       // in case the objective was not computed, evaluate it
       trial_iterate.evaluate_objective(this->original_model);
       accept = true;

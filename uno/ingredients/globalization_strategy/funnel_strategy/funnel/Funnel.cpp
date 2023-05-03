@@ -23,7 +23,7 @@ Funnel::Funnel(const Options& options) :
 
 void Funnel::initialize(){
    this->current_upper_bound = this->initial_upper_bound;
-   std::cout << "Initial funnel parameter is: " << this->current_upper_bound << std::endl; 
+   DEBUG << "Initial funnel parameter is: " << this->current_upper_bound << "\n"; 
 }
 
 void Funnel::reset() {
@@ -37,8 +37,12 @@ void Funnel::update_funnel_parameter(double current_infeasibility_measure, doubl
    this->current_upper_bound = std::max(this->parameters.kappa_infeasibility_1 *this->current_upper_bound, 
       trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
 
-   std::cout << "Current funnel parameter is: " << this->current_upper_bound << std::endl; 
+   DEBUG << "\t\tNew funnel parameter is: " << this->current_upper_bound << "\n"; 
    
+}
+
+double Funnel::get_funnel_size(){
+   return this->current_upper_bound;
 }
 
 // bool Funnel::is_empty() const {
@@ -160,7 +164,7 @@ bool Funnel::acceptable(double infeasibility_measure) {
       return true;
    }
    else {
-      DEBUG << "Rejected because of funnel condition.\n";
+      DEBUG << "\t\tREJECTED because of funnel condition.\n";
       return false;
    }
 }
@@ -179,8 +183,8 @@ double Funnel::compute_actual_reduction(double current_optimality_measure, doubl
 //! print: print the current funnel parameter
 std::ostream& operator<<(std::ostream& stream, Funnel& funnel) {
    stream << "************\n";
-   stream << "  Current funnel parameter:\n";
-   stream << "\t" << funnel.current_upper_bound << '\n';
-   stream << "************\n";
+   stream << "\t\t  Current funnel parameter:\n";
+   stream << "\t\t\t" << funnel.current_upper_bound << '\n';
+   stream << "\t\t************\n";
    return stream;
 }

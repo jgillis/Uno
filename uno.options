@@ -27,6 +27,7 @@ statistics_penalty_parameter_column_order 5
 statistics_regularization_column_order 6
 statistics_barrier_parameter_column_order 8
 statistics_SOC_column_order 9
+statistics_funnel_size_column_order 15
 statistics_LS_step_length_column_order 30
 statistics_TR_radius_column_order 30
 statistics_step_norm_column_order 31

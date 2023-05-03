@@ -38,6 +38,7 @@ public:
 
    friend std::ostream& operator<<(std::ostream& stream, Funnel& funnel);
 
+   double get_funnel_size();
 
 protected:
    double current_upper_bound; // funnel parameter

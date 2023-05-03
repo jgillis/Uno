@@ -5,7 +5,7 @@
 #include "FunnelStrategy.hpp"
 #include "funnel/FunnelFactory.hpp"
 
-FunnelStrategy::FunnelStrategy(Statistics& /*statistics*/, const Options& options) :
+FunnelStrategy::FunnelStrategy(Statistics& statistics, const Options& options) :
       GlobalizationStrategy(options),
       funnel(FunnelFactory::create(options)),
       parameters({
@@ -16,6 +16,8 @@ FunnelStrategy::FunnelStrategy(Statistics& /*statistics*/, const Options& option
          options.get_double("funnel_fact"),
          options.get_double("funnel_switching_infeasibility_exponent")
       }) {
+   statistics.add_column("funnel size", Statistics::double_width, options.get_int("statistics_funnel_size_column_order"));
+
 }
 
 void FunnelStrategy::initialize(const Iterate& initial_iterate) {
@@ -53,7 +55,7 @@ bool FunnelStrategy::switching_condition(double predicted_reduction, double curr
  * funnel methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool FunnelStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Iterate& /*trial_iterate*/,
+bool FunnelStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
@@ -63,14 +65,16 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Ite
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
    const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
-   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t ω = " << current_optimality_measure << '\n';
-   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_optimality_measure << '\n';
-   DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
+   DEBUG << "\t\tCurrent: η = " << current_progress_measures.infeasibility << ",\t ω = " << current_optimality_measure << '\n';
+   DEBUG << "\t\tTrial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_optimality_measure << '\n';
+   DEBUG << "\t\tUnconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
 
    GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);
    GlobalizationStrategy::check_finiteness(trial_progress_measures, 1.);
-   DEBUG << *this->funnel << '\n';
+   statistics.add_statistic("funnel size", this->funnel->get_funnel_size());
+   
+   DEBUG << "\t\t" <<*this->funnel << '\n';
 
    bool accept = false;
 
@@ -78,13 +82,13 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Ite
    
    // std::cout << "Phase in funnel mechanism" << static_cast<int>(this->get_phase()) << std::endl;
    // this->current_phase = Phase::FEASIBILITY_RESTORATION;
-   std::cout << "Phase in funnel mechanism" << static_cast<int>(this->current_phase) << std::endl;
+   DEBUG << "\t\tPhase in funnel mechanism" << static_cast<int>(this->current_phase) << "\n";
 
    // if (this->current_phase == Phase::OPTIMALITY){
    if (this->current_phase == 2){
-      std::cout  << "Current phase OPTIMALITY" << std::endl;
+      DEBUG  << "\t\tCurrent phase OPTIMALITY\n";
    } else {
-      std::cout  << "Current phase RESTORATION" << std::endl;
+      DEBUG  << "\t\tCurrent phase RESTORATION\n";
    }
 
    // if (this->current_phase == Phase::OPTIMALITY){
@@ -94,8 +98,7 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Ite
       const bool funnel_acceptable = this->funnel->acceptable(trial_progress_measures.infeasibility);
       
       if (funnel_acceptable) {
-         // std::cout << "Funnel condition acceptable" << std::endl;
-         DEBUG << "Funnel condition acceptable\n";
+         DEBUG << "\t\tFunnel condition acceptable\n";
 
          // check acceptance wrt current point
          // const bool improves_current_iterate = this->funnel->acceptable_wrt_current_iterate(current_progress_measures.infeasibility,
@@ -105,25 +108,23 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Ite
 
             const double actual_reduction = this->funnel->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
                   trial_optimality_measure);
-            DEBUG << "Actual reduction: " << actual_reduction << '\n';
+            DEBUG << "\t\tActual reduction: " << actual_reduction << '\n';
 
-            std::cout << "Check the switching condition ...." << std::endl;
+            DEBUG << "\t\tCheck the switching condition ....\n";
             // switching condition: the unconstrained predicted reduction is sufficiently positive
             if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
                // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
-               std::cout << "Check the armijo condition for descent ...." << std::endl;
+               DEBUG << "\t\tCheck the armijo condition for descent ....\n";
                if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
-                  std::cout << "Trial iterate satisfies Armijo condition: ACCEPTED" << std::endl;
-                  DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
+                  DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition\n";
                   accept = true;
                }
                else { // switching condition holds, but not Armijo condition
-                  std::cout << "Armijo condition not satisfied: REJECTED" << std::endl;
-                  DEBUG << "Armijo condition not satisfied, trial iterate rejected\n";
+                  DEBUG << "\t\tArmijo condition not satisfied, trial iterate REJECTED\n";
                }
             }
             else {
-               std::cout << "Trial iterate violates switching condition ..." << std::endl;
+               DEBUG << "\t\tTrial iterate violates switching condition ...\n";
                funnel_reduction_mechanism = true;
             }
             // else { // switching condition violated: predicted reduction is not promising
@@ -141,7 +142,7 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Ite
       
       else {
          funnel_reduction_mechanism = true;
-         DEBUG << "Funnel condition NOT acceptable\n";
+         DEBUG << "\t\tFunnel condition NOT acceptable\n";
       }
 
    }
@@ -151,7 +152,7 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Ite
    DEBUG << '\n';
 
    if (funnel_reduction_mechanism){
-       std::cout << "Entering funnel reduction mechanism" << std::endl;
+       DEBUG << "\t\tEntering funnel reduction mechanism\n";
 
       // Feasibility measures
       const double current_infeasibility_measure = current_progress_measures.infeasibility;
@@ -167,11 +168,11 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& /*statistics*/, const Ite
       
       if (this->armijo_sufficient_decrease(predicted_infeasibility_reduction, actual_feasibility_reduction)) {
          accept = true;
-         std::cout << "Changing funnel radius" << std::endl;
+         DEBUG << "\t\tChanging funnel radius\n";
          this->funnel->update_funnel_parameter(current_infeasibility_measure, 
                                                trial_infeasibility_measure);
       } else {
-         DEBUG << "Funnel is not changed and iterate not accepted\n";
+         DEBUG << "\t\tFunnel is not changed and iterate not accepted\n";
       }
    }
 
