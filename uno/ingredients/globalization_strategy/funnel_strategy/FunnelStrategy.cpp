@@ -16,7 +16,7 @@ FunnelStrategy::FunnelStrategy(Statistics& statistics, const Options& options) :
          options.get_double("funnel_fact"),
          options.get_double("funnel_switching_infeasibility_exponent")
       }) {
-   statistics.add_column("funnel size", Statistics::double_width, options.get_int("statistics_funnel_size_column_order"));
+   statistics.add_column("funnel width", Statistics::double_width, options.get_int("statistics_funnel_size_column_order"));
 
 }
 
@@ -72,7 +72,7 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate
 
    GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);
    GlobalizationStrategy::check_finiteness(trial_progress_measures, 1.);
-   statistics.add_statistic("funnel size", this->funnel->get_funnel_size());
+   statistics.add_statistic("funnel width", this->funnel->get_funnel_size());
    
    DEBUG << "\t\t" <<*this->funnel << '\n';
 
@@ -90,7 +90,7 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate
    } else if (this->current_phase == 1) {
       DEBUG  << "\t\tCurrent phase RESTORATION\n";
    } else {
-      DEBUG << "WARNING!!: Phase is not in [1,2]!!\n";
+      DEBUG << "WARNING!!: Phase is not in {1,2}!!\n";
    }
 
    // if (this->current_phase == Phase::OPTIMALITY){
