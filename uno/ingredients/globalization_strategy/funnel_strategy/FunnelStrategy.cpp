@@ -26,7 +26,7 @@ void FunnelStrategy::initialize(const Iterate& initial_iterate) {
                                  this->parameters.kappa_initial_multiplication * initial_iterate.progress.infeasibility);
    this->funnel->initial_upper_bound = upper_bound;
    this->funnel->initialize();
-   // this->current_phase = Phase::OPTIMALITY;
+   this->current_phase = 2;
    this->initial_funnel_upper_bound = upper_bound;
 
 }
@@ -87,8 +87,10 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate
    // if (this->current_phase == Phase::OPTIMALITY){
    if (this->current_phase == 2){
       DEBUG  << "\t\tCurrent phase OPTIMALITY\n";
-   } else {
+   } else if (this->current_phase == 1) {
       DEBUG  << "\t\tCurrent phase RESTORATION\n";
+   } else {
+      DEBUG << "WARNING!!: Phase is not in [1,2]!!\n";
    }
 
    // if (this->current_phase == Phase::OPTIMALITY){
