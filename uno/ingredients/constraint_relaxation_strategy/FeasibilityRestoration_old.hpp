@@ -1,6 +1,6 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
-
+/*
 #ifndef UNO_FEASIBILITYRESTORATION_H
 #define UNO_FEASIBILITYRESTORATION_H
 
@@ -39,9 +39,8 @@ private:
    const OptimalityProblem optimality_problem;
    l1RelaxedProblem feasibility_problem;
    std::unique_ptr<Subproblem> subproblem;
-//    const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
-//    const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
-   const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
+   const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
+   const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
    const double l1_constraint_violation_coefficient;
    const double tolerance;
@@ -63,3 +62,4 @@ private:
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H
+*/
