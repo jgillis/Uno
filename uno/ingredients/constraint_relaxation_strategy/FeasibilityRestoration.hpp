@@ -37,9 +37,8 @@ private:
    const OptimalityProblem optimality_problem;
    l1RelaxedProblem feasibility_problem;
    std::unique_ptr<Subproblem> subproblem;
-//    const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
-//    const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
-   const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
+   const std::unique_ptr<GlobalizationStrategy> restoration_phase_strategy;
+   const std::unique_ptr<GlobalizationStrategy> optimality_phase_strategy;
    Phase current_phase{Phase::OPTIMALITY};
    const double l1_constraint_violation_coefficient;
    const double tolerance;
