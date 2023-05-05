@@ -48,7 +48,8 @@ bool FunnelStrategy::is_infeasibility_acceptable(double infeasibility_measure) c
 }
 
 bool FunnelStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
-   return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
+   // return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
+   return predicted_reduction > 0;
 }
 
 /* check acceptability of step(s) (funnel & sufficient reduction)
