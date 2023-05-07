@@ -24,9 +24,17 @@ option(WITH_GTEST "Enable GoogleTest" OFF)
 message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 
 option(WITH_AMPL "Enable AMPL" OFF)
+option(WITH_CASADI "Enable CASADI" OFF)
 
 if (WITH_AMPL)
     add_definitions("-DWITH_AMPL")
+endif()
+
+if (WITH_CASADI)
+    find_package(CASADI)
+    if(CASADI_FOUND)
+        add_definitions("-DWITH_CASADI")
+    endif()
 endif()
 
 # directories
@@ -47,6 +55,10 @@ file(GLOB UNO_SOURCE_FILES
     uno/preprocessing/*.cpp
     uno/tools/*.cpp
 )
+
+if(WITH_CASADI AND CASADI_FOUND)
+    list(APPEND UNO_SOURCE_FILES uno/solvers/QP/CasadiSolver.cpp)
+endif()
 
 # find libraries
 set(LIBRARIES "")
@@ -105,6 +117,11 @@ target_include_directories(uno PUBLIC ${DIRECTORIES})
 
 # link the libraries
 target_link_libraries(uno PUBLIC ${LIBRARIES})
+
+if(WITH_CASADI AND CASADI_FOUND)
+    target_link_libraries(uno PRIVATE casadi)
+    get_target_property(casadi_INCLUDE_DIR casadi INTERFACE_INCLUDE_DIRECTORIES)
+endif()
 
 # copy the option file
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/uno.options DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
