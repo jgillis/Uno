@@ -9,11 +9,12 @@
 #include "tools/Logger.hpp"
 
 TrustRegionStrategy::TrustRegionStrategy(Statistics& statistics, ConstraintRelaxationStrategy& constraint_relaxation_strategy,
-      const Options& options) :
-      GlobalizationMechanism(constraint_relaxation_strategy),
+         const Options& options) :
+      GlobalizationMechanism(constraint_relaxation_strategy, options),
       radius(options.get_double("TR_radius")),
       increase_factor(options.get_double("TR_increase_factor")),
       decrease_factor(options.get_double("TR_decrease_factor")),
+      aggressive_decrease_factor(options.get_double("TR_aggressive_decrease_factor")),
       activity_tolerance(options.get_double("TR_activity_tolerance")),
       minimum_radius(options.get_double("TR_min_radius")),
       radius_reset_threshold(options.get_double("TR_radius_reset_threshold")) {
@@ -30,7 +31,7 @@ void TrustRegionStrategy::initialize(Iterate& initial_iterate) {
    this->constraint_relaxation_strategy.initialize(initial_iterate);
 }
 
-std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
+Iterate TrustRegionStrategy::compute_next_iterate(Statistics& statistics, const Model& model, Iterate& current_iterate) {
    this->number_iterations = 0;
    this->reset_radius();
 
@@ -39,6 +40,7 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
    warmstart_information.constraints_changed = true;
    warmstart_information.constraint_bounds_changed = true;
    warmstart_information.variable_bounds_changed = true;
+   DEBUG2 << "Current iterate\n" << current_iterate << '\n';
 
    while (not this->termination()) {
       try {
@@ -48,36 +50,55 @@ std::tuple<Iterate, double> TrustRegionStrategy::compute_next_iterate(Statistics
          // compute the direction within the trust region
          this->constraint_relaxation_strategy.set_trust_region_radius(this->radius);
          Direction direction = this->constraint_relaxation_strategy.compute_feasible_direction(statistics, current_iterate, warmstart_information);
+         DEBUG << "Step norm: " << direction.norm << '\n';
+
          if (direction.status == SubproblemStatus::UNBOUNDED_PROBLEM) {
-            throw std::exception();
+            this->decrease_radius_aggressively();
+            warmstart_information.objective_changed = true;
+            warmstart_information.constraints_changed = true;
+            warmstart_information.constraint_bounds_changed = true;
+            warmstart_information.variable_bounds_changed = true;
+            warmstart_information.problem_changed = true;
          }
          if (direction.status == SubproblemStatus::ERROR) {
-            throw std::exception();
+            this->decrease_radius();
+            warmstart_information.objective_changed = true;
+            warmstart_information.constraints_changed = true;
+            warmstart_information.constraint_bounds_changed = true;
+            warmstart_information.variable_bounds_changed = true;
+            warmstart_information.problem_changed = true;
          }
+         else {
+            // assemble the trial iterate by taking a full step
+            Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
+            // check whether the trial step is accepted
+            if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
+                  direction.primal_dual_step_length)) {
+               this->set_statistics(statistics, direction);
 
-         // assemble the trial iterate by taking a full step
-         Iterate trial_iterate = this->assemble_trial_iterate(model, current_iterate, direction);
-         // check whether the trial step is accepted
-         if (this->constraint_relaxation_strategy.is_iterate_acceptable(statistics, current_iterate, trial_iterate, direction,
-               direction.primal_dual_step_length)) {
-            this->set_statistics(statistics, direction);
+               // increase the radius if trust region is active
+               this->possibly_increase_radius(direction.norm);
 
-            // increase the radius if trust region is active
-            this->possibly_increase_radius(direction.norm);
-            return std::make_tuple(std::move(trial_iterate), direction.norm);
+               // check termination criteria
+               trial_iterate.status = this->check_termination(model, trial_iterate, direction.norm);
+               return trial_iterate;
+            }
+            else { // trial iterate not acceptable
+               this->decrease_radius(direction.norm);
+            }
+            // after the first iteration, only the variable bounds are updated
+            warmstart_information.objective_changed = false;
+            warmstart_information.constraints_changed = false;
+            warmstart_information.constraint_bounds_changed = false;
+            warmstart_information.variable_bounds_changed = true;
          }
-         else { // trial iterate not acceptable
-            this->decrease_radius(direction.norm);
-         }
-         // after the first iteration, only the variable bounds are updated
-         warmstart_information.objective_changed = false;
-         warmstart_information.constraints_changed = false;
-         warmstart_information.constraint_bounds_changed = false;
-         warmstart_information.variable_bounds_changed = true;
+      }
+      catch (const std::runtime_error& e) {
+         throw;
       }
       // if an error occurs (evaluation error or unstable inertia), decrease the radius
       catch (const std::exception& e) {
-         GlobalizationMechanism::print_warning(e.what());
+         WARNING << YELLOW << e.what() << RESET;
          this->decrease_radius();
          warmstart_information.objective_changed = true;
          warmstart_information.constraints_changed = true;
@@ -112,6 +133,10 @@ void TrustRegionStrategy::decrease_radius(double step_norm) {
 
 void TrustRegionStrategy::decrease_radius() {
    this->radius /= this->decrease_factor;
+}
+
+void TrustRegionStrategy::decrease_radius_aggressively() {
+   this->radius /= this->aggressive_decrease_factor;
 }
 
 void TrustRegionStrategy::reset_radius() {

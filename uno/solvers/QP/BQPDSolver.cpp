@@ -93,7 +93,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
          DEBUG << "gradient c" << j << ": " << constraint_jacobian[j];
       }
       for (size_t i: Range(number_variables)) {
-         DEBUG << "Δx" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
+         DEBUG << "d_x" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
       }
       for (size_t j: Range(number_constraints)) {
          DEBUG << "linearized c" << j << " in [" << constraint_bounds[j].lb << ", " << constraint_bounds[j].ub << "]\n";
@@ -105,13 +105,14 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
       this->save_gradients_to_local_format(number_constraints, linear_objective, constraint_jacobian);
    }
 
-   // bounds
+   // set variable bounds
    if (warmstart_information.variable_bounds_changed) {
       for (size_t i: Range(number_variables)) {
          this->lb[i] = (variables_bounds[i].lb == -INF<double>) ? -BIG : variables_bounds[i].lb;
          this->ub[i] = (variables_bounds[i].ub == INF<double>) ? BIG : variables_bounds[i].ub;
       }
    }
+   // set constraint bounds
    if (warmstart_information.constraint_bounds_changed) {
       for (size_t j: Range(number_constraints)) {
          this->lb[number_variables + j] = (constraint_bounds[j].lb == -INF<double>) ? -BIG : constraint_bounds[j].lb;
@@ -120,21 +121,21 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    }
 
    Direction direction(number_variables, number_constraints);
-   direction.set_dimensions(number_variables, number_constraints);
    copy_from(direction.primals, initial_point);
    const int n = static_cast<int>(number_variables);
    const int m = static_cast<int>(number_constraints);
-   BQPDMode mode = BQPDSolver::determine_mode(warmstart_information);
+
+   BQPDMode mode = this->determine_mode(warmstart_information);
    const int mode_integer = static_cast<int>(mode);
 
    // solve the LP/QP
-   bqpd_(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(),
-         direction.primals.data(), this->lb.data(), this->ub.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(),
-         this->residuals.data(), this->w.data(), this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(),
-         &this->mlp, &this->peq_solution, this->hessian_values.data(), this->hessian_sparsity.data(), &mode_integer, &this->ifail,
-         this->info.data(), &this->iprint, &this->nout);
+   bqpd_(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(), direction.primals.data(), this->lb.data(),
+         this->ub.data(), &direction.subproblem_objective, &this->fmin, this->gradient_solution.data(), this->residuals.data(), this->w.data(),
+         this->e.data(), this->active_set.data(), this->alp.data(), this->lp.data(), &this->mlp, &this->peq_solution, this->hessian_values.data(),
+         this->hessian_sparsity.data(), &mode_integer, &this->ifail, this->info.data(), &this->iprint, &this->nout);
    BQPDStatus bqpd_status = BQPDSolver::bqpd_status_from_int(this->ifail);
    direction.status = BQPDSolver::status_from_bqpd_status(bqpd_status);
+   this->number_calls++;
 
    // project solution into bounds
    for (size_t i: Range(number_variables)) {
@@ -144,11 +145,15 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    return direction;
 }
 
-BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) {
-   BQPDMode mode = BQPDMode::COLD_START;
+BQPDMode BQPDSolver::determine_mode(const WarmstartInformation& warmstart_information) const {
+   BQPDMode mode = (this->number_calls == 0) ? BQPDMode::ACTIVE_SET_EQUALITIES : BQPDMode::USER_DEFINED;
+   // if problem changed, use cold start
+   if (warmstart_information.problem_changed) {
+      mode = BQPDMode::ACTIVE_SET_EQUALITIES;
+   }
    // if only the variable bounds changed, reuse the active set estimate and the Jacobian information
-   if (warmstart_information.variable_bounds_changed && not warmstart_information.objective_changed && not warmstart_information.constraints_changed &&
-       not warmstart_information.constraint_bounds_changed) {
+   else if (warmstart_information.variable_bounds_changed && not warmstart_information.objective_changed &&
+         not warmstart_information.constraints_changed && not warmstart_information.constraint_bounds_changed) {
       mode = BQPDMode::UNCHANGED_ACTIVE_SET_AND_JACOBIAN;
    }
    return mode;

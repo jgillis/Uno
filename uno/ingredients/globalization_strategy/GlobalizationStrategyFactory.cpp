@@ -8,12 +8,12 @@
 #include "funnel_strategy/FunnelStrategy.hpp"
 
 std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Statistics& statistics, const std::string& strategy_type,
-      const Options& options) {
+      bool accept_when_switching_violated, const Options& options) {
    if (strategy_type == "l1_merit") {
       return std::make_unique<l1MeritFunction>(statistics, options);
    }
    else if (strategy_type == "leyffer_filter_strategy") {
-      return std::make_unique<LeyfferFilterStrategy>(statistics, options);
+      return std::make_unique<LeyfferFilterStrategy>(statistics, accept_when_switching_violated, options);
    }
    else if (strategy_type == "waechter_filter_strategy") {
       return std::make_unique<WaechterFilterStrategy>(statistics, options);
