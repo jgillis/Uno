@@ -6,8 +6,6 @@
 GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
       constraint_relaxation_strategy(constraint_relaxation_strategy),
       tolerance(options.get_double("tolerance")),
-      terminate_with_small_step(options.get_bool("terminate_with_small_step")),
-      small_step_threshold(options.get_double("small_step_threshold")),
       unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
 }
 
@@ -37,7 +35,26 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
    }
 }
 
-TerminationStatus GlobalizationMechanism::check_termination(const Model& model, Iterate& current_iterate, double step_norm) const {
+bool GlobalizationMechanism::terminate_with_small_step(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
+   // evaluate infeasibility
+   trial_iterate.evaluate_constraints(model);
+   trial_iterate.residuals.infeasibility = model.compute_constraint_violation(trial_iterate.evaluations.constraints, L1_NORM);
+
+   // terminate with a feasible point
+   if (trial_iterate.residuals.infeasibility <= this->tolerance) {
+      trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
+      return true;
+   }
+   else if (direction.objective_multiplier == 0.) { // terminate with an infeasible stationary point
+      trial_iterate.status = TerminationStatus::INFEASIBLE_STATIONARY_POINT;
+      return true;
+   }
+   else { // do not terminate, infeasible non stationary
+      return false;
+   }
+}
+
+TerminationStatus GlobalizationMechanism::check_termination(const Model& model, Iterate& current_iterate) const {
    // evaluate termination conditions based on optimality conditions
    const bool optimality_stationarity = (current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling <=
                                          this->tolerance);
@@ -61,22 +78,18 @@ TerminationStatus GlobalizationMechanism::check_termination(const Model& model, 
       return TerminationStatus::UNBOUNDED;
    }
    else if (optimality_complementarity && primal_feasibility) {
-      if (feasibility_stationarity && no_trivial_duals) {
-         // feasible but CQ failure
-         return TerminationStatus::FEASIBLE_FJ_POINT;
-      }
-      else if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
+      if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
          // feasible regular stationary point
          return TerminationStatus::FEASIBLE_KKT_POINT;
+      }
+      else if (feasibility_stationarity && no_trivial_duals) {
+         // feasible but CQ failure
+         return TerminationStatus::FEASIBLE_FJ_POINT;
       }
    }
    else if (feasibility_complementarity && feasibility_stationarity) {
       // no primal feasibility, stationary point of constraint violation
       return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
-   }
-   // stationarity & complementarity not achieved, but we can terminate with a small step
-   if (this->terminate_with_small_step && step_norm <= this->small_step_threshold && primal_feasibility) {
-      return TerminationStatus::FEASIBLE_SMALL_STEP;
    }
    return TerminationStatus::NOT_OPTIMAL;
 }
