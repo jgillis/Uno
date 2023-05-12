@@ -14,7 +14,6 @@
  *  Ingredient that accepts or rejects a trial iterate
  */
 
-enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
 class GlobalizationStrategy {
 public:
@@ -28,9 +27,6 @@ public:
 
    virtual void reset() = 0;
    virtual void register_current_progress(const ProgressMeasures& current_progress) = 0;
-   // void set_phase(Phase new_phase);
-   // Phase get_phase();
-   // Phase current_phase;
    int current_phase;
 
 protected:

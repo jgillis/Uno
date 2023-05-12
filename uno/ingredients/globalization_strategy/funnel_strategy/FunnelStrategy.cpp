@@ -48,8 +48,8 @@ bool FunnelStrategy::is_infeasibility_acceptable(double infeasibility_measure) c
 }
 
 bool FunnelStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
-   // return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
-   return predicted_reduction > 0;
+   return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
+   // return predicted_reduction > 0;
 }
 
 /* check acceptability of step(s) (funnel & sufficient reduction)
@@ -95,7 +95,7 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate
    }
 
    // if (this->current_phase == Phase::OPTIMALITY){
-   if (this->current_phase == 2){
+   // if (this->current_phase == 2){
    
       // check acceptance
       const bool funnel_acceptable = this->funnel->acceptable(trial_progress_measures.infeasibility);
@@ -141,18 +141,15 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate
          // else {
          //    DEBUG << "Not acceptable with respect to current point\n";
          // }
-      }
-      
-      else {
+      } else {
          funnel_reduction_mechanism = true;
          DEBUG << "\t\tFunnel condition NOT acceptable\n";
       }
 
-   }
-   else {
-      funnel_reduction_mechanism = true;
-   }
-   DEBUG << '\n';
+   // }
+   // else {
+   //    funnel_reduction_mechanism = true;
+   // }
 
    if (funnel_reduction_mechanism){
        DEBUG << "\t\tEntering funnel reduction mechanism\n";
