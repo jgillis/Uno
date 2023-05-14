@@ -27,7 +27,7 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
       });
       matrix.finalize_column(model.number_variables + j);
    }
-   DEBUG << "Matrix for least-square multipliers:\n" << matrix << '\n';
+   DEBUG2 << "Matrix for least-square multipliers:\n" << matrix << '\n';
 
    /* generate the right-hand side */
    initialize_vector(rhs, 0.);
@@ -39,13 +39,13 @@ void Preprocessing::compute_least_square_multipliers(const Model& model, Symmetr
    for (size_t i: Range(model.number_variables)) {
       rhs[i] -= current_iterate.multipliers.lower_bounds[i] + current_iterate.multipliers.upper_bounds[i];
    }
-   DEBUG << "RHS for least-square multipliers: "; print_vector(DEBUG, rhs, 0, matrix.dimension);
+   DEBUG2 << "RHS for least-square multipliers: "; print_vector(DEBUG2, rhs, 0, matrix.dimension);
    
    /* solve the system */
    std::vector<double> solution(matrix.dimension);
    linear_solver.factorize(matrix);
    linear_solver.solve_indefinite_system(matrix, rhs, solution);
-   DEBUG << "Solution: "; print_vector(DEBUG, solution, 0, matrix.dimension);
+   DEBUG2 << "Solution: "; print_vector(DEBUG2, solution, 0, matrix.dimension);
 
    // if least-square multipliers too big, discard them. Otherwise, keep them
    if (norm_inf(solution, Range(model.number_variables, model.number_variables + model.number_constraints)) <= multiplier_max_norm) {
@@ -107,8 +107,9 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
          BQPDSolver solver(model.number_variables, linear_constraints.size(), model.number_variables, true, options);
          std::vector<double> d0(model.number_variables); // = 0
          SparseVector<double> linear_objective; // empty
+         WarmstartInformation warmstart_information{true, true, true, true};
          Direction direction = solver.solve_QP(model.number_variables, linear_constraints.size(), variables_bounds, constraints_bounds,
-               linear_objective, constraint_jacobian, hessian, d0);
+               linear_objective, constraint_jacobian, hessian, d0, warmstart_information);
          if (direction.status == SubproblemStatus::INFEASIBLE) {
             throw std::runtime_error("Linear constraints cannot be satisfied");
          }
@@ -121,7 +122,7 @@ void Preprocessing::enforce_linear_constraints(const Options& options, const Mod
             const size_t j = linear_constraints[linear_constraint_index];
             multipliers.constraints[j] += direction.multipliers.constraints[linear_constraint_index];
          }
-         INFO << "Linear feasible initial point: "; print_vector(INFO, x);
+         DEBUG2 << "Linear feasible initial point: "; print_vector(DEBUG2, x);
       }
    }
 }

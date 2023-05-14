@@ -11,6 +11,7 @@ public:
    ActiveSetSubproblem(size_t max_number_variables, size_t max_number_constraints);
    ~ActiveSetSubproblem() override = default;
 
+   void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
    void set_initial_point(const std::vector<double>& initial_point) override;
    void initialize_feasibility_problem() override;
    void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) override;
@@ -23,10 +24,10 @@ public:
 
 protected:
    std::vector<double> initial_point{};
-   std::vector<Interval> variable_displacement_bounds{};
+   std::vector<Interval> direction_bounds{};
    std::vector<Interval> linearized_constraint_bounds{};
 
-   void set_variable_displacement_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
+   void set_direction_bounds(const NonlinearProblem& problem, const Iterate& current_iterate);
    void set_linearized_constraint_bounds(const NonlinearProblem& problem, const std::vector<double>& current_constraints);
    static void compute_dual_displacements(const NonlinearProblem& problem, const Iterate& current_iterate, Direction& direction);
 };

@@ -5,14 +5,14 @@ tolerance 1e-8
 # maximum outer iterations
 max_iterations 2000
 
+# CPU time limit (in seconds)
+time_limit inf
+
 # print optimal solution (yes|no)
 print_solution no
 
-# Uno terminates when the step is small
-terminate_with_small_step yes
-
-# small step threshold
-small_step_threshold 1e-11
+# threshold on objective to declare unbounded NLP
+unbounded_objective_threshold -1e20
 
 # enforce linear constraints at the initial point
 enforce_linear_constraints no
@@ -72,9 +72,6 @@ scale_residuals yes
 
 # enforce the linear constraints at the initial point (yes|no)
 enforce_linear_constraints no
-
-# enable the use of second-order correction (yes|no)
-use_second_order_correction no
 
 # norm of the progress measures (L1|L2|INF)
 progress_norm L1
@@ -149,11 +146,14 @@ TR_increase_factor 2
 # TR radius decrease factor
 TR_decrease_factor 2
 
+# TR aggressive radius decrease factor
+TR_aggressive_decrease_factor 4
+
 # tolerance in TR constraint activity
 TR_activity_tolerance 1e-6
 
 # minimum TR radius
-TR_min_radius 1e-12
+TR_min_radius 1e-7
 
 # threshold below which the TR radius is reset
 TR_radius_reset_threshold 1e-4

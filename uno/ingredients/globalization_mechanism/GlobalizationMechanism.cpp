@@ -3,8 +3,10 @@
 
 #include "GlobalizationMechanism.hpp"
 
-GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy) :
-      constraint_relaxation_strategy(constraint_relaxation_strategy) {
+GlobalizationMechanism::GlobalizationMechanism(ConstraintRelaxationStrategy& constraint_relaxation_strategy, const Options& options) :
+      constraint_relaxation_strategy(constraint_relaxation_strategy),
+      tolerance(options.get_double("tolerance")),
+      unbounded_objective_threshold(options.get_double("unbounded_objective_threshold")) {
 }
 
 Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate, const Direction& direction, double primal_dual_step_length,
@@ -33,14 +35,69 @@ Iterate GlobalizationMechanism::assemble_trial_iterate(Iterate& current_iterate,
    }
 }
 
+bool GlobalizationMechanism::terminate_with_small_step(const Model& model, const Direction& direction, Iterate& trial_iterate) const {
+   // evaluate infeasibility
+   trial_iterate.evaluate_constraints(model);
+   trial_iterate.residuals.infeasibility = model.compute_constraint_violation(trial_iterate.evaluations.constraints, L1_NORM);
+
+   // terminate with a feasible point
+   if (trial_iterate.residuals.infeasibility <= this->tolerance) {
+      trial_iterate.status = TerminationStatus::FEASIBLE_SMALL_STEP;
+      return true;
+   }
+   else if (direction.objective_multiplier == 0.) { // terminate with an infeasible stationary point
+      trial_iterate.status = TerminationStatus::INFEASIBLE_STATIONARY_POINT;
+      return true;
+   }
+   else { // do not terminate, infeasible non stationary
+      return false;
+   }
+}
+
+TerminationStatus GlobalizationMechanism::check_termination(const Model& model, Iterate& current_iterate) const {
+   // evaluate termination conditions based on optimality conditions
+   const bool optimality_stationarity = (current_iterate.residuals.optimality_stationarity/current_iterate.residuals.stationarity_scaling <=
+                                         this->tolerance);
+   const bool feasibility_stationarity = (current_iterate.residuals.feasibility_stationarity/current_iterate.residuals.stationarity_scaling <=
+                                          this->tolerance);
+   const bool optimality_complementarity = (current_iterate.residuals.optimality_complementarity / current_iterate.residuals.complementarity_scaling <= this->tolerance);
+   const bool feasibility_complementarity = (current_iterate.residuals.feasibility_complementarity / current_iterate.residuals.complementarity_scaling
+                                             <= this->tolerance);
+   const bool primal_feasibility = (current_iterate.residuals.infeasibility <= this->tolerance);
+   const bool no_trivial_duals = current_iterate.multipliers.not_all_zero(model.number_variables, this->tolerance);
+
+   DEBUG << "Termination criteria:\n";
+   DEBUG << "Stationarity (optimality): " << std::boolalpha << optimality_stationarity << '\n';
+   DEBUG << "Stationarity (feasibility): " << std::boolalpha << feasibility_stationarity << '\n';
+   DEBUG << "Complementarity (optimality): " << std::boolalpha << optimality_complementarity << '\n';
+   DEBUG << "Complementarity (feasibility): " << std::boolalpha << feasibility_complementarity << '\n';
+   DEBUG << "Primal feasibility: " << std::boolalpha << primal_feasibility << '\n';
+   DEBUG << "Not all zero multipliers: " << std::boolalpha << no_trivial_duals << "\n\n";
+
+   if (current_iterate.evaluations.objective < this->unbounded_objective_threshold) {
+      return TerminationStatus::UNBOUNDED;
+   }
+   else if (optimality_complementarity && primal_feasibility) {
+      if (0. < current_iterate.multipliers.objective && optimality_stationarity) {
+         // feasible regular stationary point
+         return TerminationStatus::FEASIBLE_KKT_POINT;
+      }
+      else if (feasibility_stationarity && no_trivial_duals) {
+         // feasible but CQ failure
+         return TerminationStatus::FEASIBLE_FJ_POINT;
+      }
+   }
+   else if (feasibility_complementarity && feasibility_stationarity) {
+      // no primal feasibility, stationary point of constraint violation
+      return TerminationStatus::INFEASIBLE_STATIONARY_POINT;
+   }
+   return TerminationStatus::NOT_OPTIMAL;
+}
+
 size_t GlobalizationMechanism::get_hessian_evaluation_count() const {
    return this->constraint_relaxation_strategy.get_hessian_evaluation_count();
 }
 
 size_t GlobalizationMechanism::get_number_subproblems_solved() const {
    return this->constraint_relaxation_strategy.get_number_subproblems_solved();
-}
-
-void GlobalizationMechanism::print_warning(const char* message) {
-   WARNING << YELLOW << message << RESET << '\n';
 }

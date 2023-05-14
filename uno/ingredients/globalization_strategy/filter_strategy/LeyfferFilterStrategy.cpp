@@ -3,7 +3,9 @@
 
 #include "LeyfferFilterStrategy.hpp"
 
-LeyfferFilterStrategy::LeyfferFilterStrategy(Statistics& /*statistics*/, const Options& options): FilterStrategy(options) {
+LeyfferFilterStrategy::LeyfferFilterStrategy(Statistics& /*statistics*/, bool accept_when_switching_violated, const Options& options):
+      FilterStrategy(options),
+      accept_when_switching_violated(accept_when_switching_violated) {
 }
 
 /* check acceptability of step(s) (filter & sufficient reduction)
@@ -19,8 +21,8 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, co
    // - ignore the predicted infeasibility reduction
    // - scale the scaled optimality measure with 1
    const double unconstrained_predicted_reduction = predicted_reduction.optimality(1.) + predicted_reduction.auxiliary_terms;
-   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ", ω = " << current_optimality_measure << '\n';
-   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ", ω = " << trial_optimality_measure << '\n';
+   DEBUG << "Current: η = " << current_progress_measures.infeasibility << ",\t ω = " << current_optimality_measure << '\n';
+   DEBUG << "Trial:   η = " << trial_progress_measures.infeasibility << ",\t ω = " << trial_optimality_measure << '\n';
    DEBUG << "Unconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
 
@@ -38,7 +40,7 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, co
       const bool improves_current_iterate = this->filter->acceptable_wrt_current_iterate(current_progress_measures.infeasibility,
             current_optimality_measure, trial_progress_measures.infeasibility, trial_optimality_measure);
       if (improves_current_iterate) {
-         DEBUG << "Acceptable wrt current point\n";
+         DEBUG << "Acceptable with respect to current point\n";
          const double actual_reduction = this->filter->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
                trial_optimality_measure);
          DEBUG << "Actual reduction: " << actual_reduction << '\n';
@@ -47,22 +49,25 @@ bool LeyfferFilterStrategy::is_iterate_acceptable(Statistics& /*statistics*/, co
          if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
             // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
             if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
-               DEBUG << "Trial iterate was accepted by satisfying Armijo condition\n";
+               DEBUG << "Trial iterate was accepted by satisfying the Armijo condition\n";
                accept = true;
             }
             else { // switching condition holds, but not Armijo condition
-               DEBUG << "Armijo condition not satisfied, trial iterate rejected\n";
+               DEBUG << "Trial iterate was rejected by violating the Armijo condition\n";
             }
          }
-         else { // switching condition violated: predicted reduction is not promising
-            this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
-            DEBUG << "Trial iterate was accepted by violating switching condition\n";
-            DEBUG << "Current iterate was added to the filter\n";
+         else if (this->accept_when_switching_violated) { // switching condition violated: predicted reduction is not promising
+            DEBUG << "Trial iterate was accepted by violating the switching condition\n";
             accept = true;
+            DEBUG << "Current iterate was added to the filter\n";
+            this->filter->add(current_progress_measures.infeasibility, current_optimality_measure);
+         }
+         else {
+            DEBUG << "Trial iterate was rejected by violating the switching condition\n";
          }
       }
       else {
-         DEBUG << "Not acceptable wrt current point\n";
+         DEBUG << "Not acceptable with respect to current point\n";
       }
    }
    else {

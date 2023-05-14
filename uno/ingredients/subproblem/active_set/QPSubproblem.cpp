@@ -19,41 +19,45 @@ QPSubproblem::QPSubproblem(Statistics& statistics, size_t max_number_variables, 
    }
 }
 
-void QPSubproblem::generate_initial_iterate(const NonlinearProblem& /*problem*/, Iterate& /*initial_iterate*/) {
-}
-
-void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate) {
-   // Hessian
-   this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_iterate.multipliers.constraints);
+void QPSubproblem::evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+      const WarmstartInformation& warmstart_information) {
+   // Lagrangian Hessian
+   if (warmstart_information.objective_changed || warmstart_information.constraints_changed) {
+      this->hessian_model->evaluate(statistics, problem, current_iterate.primals, current_iterate.multipliers.constraints);
+   }
    // objective gradient, constraints and constraint Jacobian
-   problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
-   problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
-   problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
+   if (warmstart_information.objective_changed) {
+      problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
+   }
+   if (warmstart_information.constraints_changed) {
+      problem.evaluate_constraints(current_iterate, this->evaluations.constraints);
+      problem.evaluate_constraint_jacobian(current_iterate, this->evaluations.constraint_jacobian);
+   }
 }
 
-Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) {
-   if (evaluate_functions) {
-      // evaluate the functions at the current iterate
-      this->evaluate_functions(statistics, problem, current_iterate);
+Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+      const WarmstartInformation& warmstart_information) {
+   // evaluate the functions at the current iterate
+   this->evaluate_functions(statistics, problem, current_iterate, warmstart_information);
+
+   // set bounds of the variable displacements
+   if (warmstart_information.variable_bounds_changed) {
+      this->set_direction_bounds(problem, current_iterate);
    }
 
-   // bounds of the variable displacements
-   this->set_variable_bounds(problem, current_iterate);
-   this->set_variable_displacement_bounds(problem, current_iterate);
+   // set bounds of the linearized constraints
+   if (warmstart_information.constraint_bounds_changed) {
+      this->set_linearized_constraint_bounds(problem, this->evaluations.constraints);
+   }
 
-   // bounds of the linearized constraints
-   this->set_linearized_constraint_bounds(problem, this->evaluations.constraints);
-
-   return this->solve_QP(problem, current_iterate);
-}
-
-Direction QPSubproblem::solve_QP(const NonlinearProblem& problem, Iterate& iterate) {
-   Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->variable_displacement_bounds,
+   // solve the QP
+   Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
-         *this->hessian_model->hessian, this->initial_point);
-   Subproblem::check_unboundedness(direction);
-   ActiveSetSubproblem::compute_dual_displacements(problem, iterate, direction);
+         *this->hessian_model->hessian, this->initial_point, warmstart_information);
+   ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
+   // reset the initial point
+   initialize_vector(this->initial_point, 0.);
    return direction;
 }
 

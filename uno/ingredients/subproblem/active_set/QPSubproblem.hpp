@@ -14,8 +14,8 @@ public:
    QPSubproblem(Statistics& statistics, size_t max_number_variables, size_t max_number_constraints, size_t max_number_hessian_nonzeros,
          const Options& options);
 
-   void generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) override;
-   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate, bool evaluate_functions) override;
+   [[nodiscard]] Direction solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+         const WarmstartInformation& warmstart_information) override;
    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
 
 protected:
@@ -24,8 +24,8 @@ protected:
    const std::unique_ptr<HessianModel> hessian_model; /*!< Strategy to evaluate or approximate the Hessian */
    const std::unique_ptr<QPSolver> solver; /*!< Solver that solves the subproblem */
 
-   void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate);
-   [[nodiscard]] Direction solve_QP(const NonlinearProblem& problem, Iterate& iterate);
+   void evaluate_functions(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+         const WarmstartInformation& warmstart_information);
 };
 
 #endif // UNO_QPSUBPROBLEM_H

@@ -15,10 +15,12 @@
 
 size_t memory_allocation_amount = 0;
 
+/*
 void* operator new(size_t size) {
    memory_allocation_amount += size;
    return malloc(size);
 }
+*/
 
 Statistics create_statistics(const Model& model, const Options& options) {
    Statistics statistics(options);
@@ -62,20 +64,25 @@ void run_uno_ampl(const std::string& model_name, const Options& options) {
 
    // instantiate the combination of ingredients and solve the problem
    Uno uno = Uno(*mechanism, options);
-   Result result = uno.solve(statistics, *model, initial_iterate);
+   try {
+      Result result = uno.solve(statistics, *model, initial_iterate);
 
-   // print the optimization summary
-   std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
-         options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
-   std::cout << "\nUno (" << combination << ")\n";
-   std::cout << Timer::get_current_date();
-   std::cout << "────────────────────────────────────────\n";
-   const bool print_solution = options.get_bool("print_solution");
-   result.print(print_solution);
-   std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
+      // print the optimization summary
+      std::string combination = options.get_string("globalization_mechanism") + " " + options.get_string("constraint_relaxation_strategy") + " " +
+                                options.get_string("globalization_strategy") + " " + options.get_string("subproblem");
+      std::cout << "\nUno (" << combination << ")\n";
+      std::cout << Timer::get_current_date();
+      std::cout << "────────────────────────────────────────\n";
+      const bool print_solution = options.get_bool("print_solution");
+      result.print(print_solution);
+      std::cout << "memory_allocation_amount = " << memory_allocation_amount << '\n';
+   }
+   catch (const std::exception& e) {
+      std::cout << "Uno terminated with an error\n";
+   }
 }
 
-Level Logger::logger_level = INFO;
+Level Logger::level = INFO;
 
 void print_uno_version() {
    std::cout << "Welcome in Uno 1.0\n";
@@ -96,7 +103,7 @@ int main(int argc, char* argv[]) {
       Options options = get_default_options("uno.options");
       // override them with the command line options
       get_command_line_options(argc, argv, options);
-      set_logger(options.get_string("logger"));
+      Logger::set_logger(options.get_string("logger"));
 
       if (std::string(argv[1]) == "-v") {
          print_uno_version();

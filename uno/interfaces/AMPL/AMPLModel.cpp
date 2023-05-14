@@ -33,7 +33,7 @@ AMPLModel::AMPLModel(const std::string& file_name) : AMPLModel(file_name, genera
 }
 
 AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
-      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_), NONLINEAR),
+      Model(file_name, static_cast<size_t>(asl->i.n_var_), static_cast<size_t>(asl->i.n_con_)),
       asl(asl),
       // allocate vectors
       ampl_tmp_gradient(this->number_variables),
@@ -48,6 +48,10 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->objective_sign = (this->asl->i.objtype_[0] == 1) ? -1. : 1.;
 
    // variables
+   this->lower_bounded_variables.reserve(this->number_variables);
+   this->upper_bounded_variables.reserve(this->number_variables);
+   this->single_lower_bounded_variables.reserve(this->number_variables);
+   this->single_upper_bounded_variables.reserve(this->number_variables);
    this->generate_variables();
 
    // constraints
@@ -55,7 +59,6 @@ AMPLModel::AMPLModel(const std::string& file_name, ASL* asl) :
    this->inequality_constraints.reserve(this->number_constraints);
    this->linear_constraints.reserve(this->number_constraints);
    this->generate_constraints();
-   this->set_function_types(file_name);
 
    // compute number of nonzeros
    this->number_objective_gradient_nonzeros = static_cast<size_t>(this->asl->i.nzo_);
@@ -96,9 +99,9 @@ void AMPLModel::generate_variables() {
 }
 
 double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
-   int nerror = 0;
-   double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   double result = this->objective_sign * (*(this->asl)->p.Objval)(this->asl, 0, const_cast<double*>(x.data()), &error_flag);
+   if (0 < error_flag) {
       throw FunctionEvaluationError();
    }
    return result;
@@ -106,14 +109,21 @@ double AMPLModel::evaluate_objective(const std::vector<double>& x) const {
 
 // sparse gradient
 void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, SparseVector<double>& gradient) const {
-   // compute the AMPL gradient (always in dense format)
-   int nerror = 0;
-   (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   // prevent ASL to crash by catching all evaluation errors
+   Jmp_buf err_jmp_uno;
+   asl->i.err_jmp_ = &err_jmp_uno;
+   asl->i.err_jmp1_ = &err_jmp_uno;
+   if (setjmp(err_jmp_uno.jb)) {
+      error_flag = 1;
+   }
+   // evaluate the AMPL gradient (always in a dense vector)
+   (*(this->asl)->p.Objgrd)(this->asl, 0, const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()), &error_flag);
+   if (0 < error_flag) {
       throw GradientEvaluationError();
    }
 
-   // partial derivatives in same order as variables in this->asl_->i.Ograd_[0]
+   // create the sparse vector: partial derivatives in same order as variables in this->asl_->i.Ograd_[0]
    ograd* ampl_variables_tmp = this->asl->i.Ograd_[0];
    while (ampl_variables_tmp != nullptr) {
       const size_t index = static_cast<size_t>(ampl_variables_tmp->varno);
@@ -126,9 +136,9 @@ void AMPLModel::evaluate_objective_gradient(const std::vector<double>& x, Sparse
 
 /*
 double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const {
-   int nerror = 0;
-   double result = (*(this->asl)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   double result = (*(this->asl)->p.Conival)(this->asl_, j, const_cast<double*>(x.data()), &error_flag);
+   if (0 < error_flag) {
       throw FunctionNumericalError();
    }
    return result;
@@ -136,9 +146,9 @@ double AMPLModel::evaluate_constraint(int j, const std::vector<double>& x) const
 */
 
 void AMPLModel::evaluate_constraints(const std::vector<double>& x, std::vector<double>& constraints) const {
-   int nerror = 0;
-   (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &nerror);
-   if (0 < nerror) {
+   int error_flag = 0;
+   (*(this->asl)->p.Conval)(this->asl, const_cast<double*>(x.data()), constraints.data(), &error_flag);
+   if (0 < error_flag) {
       throw FunctionEvaluationError();
    }
 }
@@ -149,10 +159,10 @@ void AMPLModel::evaluate_constraint_gradient(const std::vector<double>& x, size_
    this->asl->i.congrd_mode = 1; // sparse computation
 
    // compute the AMPL gradient
-   int nerror = 0;
+   int error_flag = 0;
    (*(this->asl)->p.Congrd)(this->asl, static_cast<int>(j), const_cast<double*>(x.data()), const_cast<double*>(this->ampl_tmp_gradient.data()),
-         &nerror);
-   if (0 < nerror) {
+         &error_flag);
+   if (0 < error_flag) {
       throw GradientEvaluationError();
    }
 
@@ -184,8 +194,8 @@ void AMPLModel::set_number_hessian_nonzeros() {
    this->ampl_tmp_hessian.reserve(this->number_hessian_nonzeros);
 
    // use Lagrangian scale: in AMPL, the Lagrangian is f + lambda.g, while Uno uses f - lambda.g
-   int nerror{};
-   lagscale_ASL(this->asl, -1., &nerror);
+   int error_flag{};
+   lagscale_ASL(this->asl, -1., &error_flag);
 }
 
 size_t AMPLModel::get_number_objective_gradient_nonzeros() const {
@@ -318,60 +328,13 @@ void AMPLModel::generate_constraints() {
    }
    Model::determine_bounds_types(this->constraint_bounds, this->constraint_status);
    this->determine_constraints();
-}
 
-void AMPLModel::set_function_types(std::string file_name) {
-   // allocate a temporary ASL to read Hessian sparsity pattern
-   ASL* asl_fg = ASL_alloc(ASL_read_fg);
-   // char* stub = getstops(file_name, option_info);
-   //if (file_name == nullptr) {
-   //	usage_ASL(option_info, 1);
-   //}
-
-   FILE* nl = jac0dim_ASL(asl_fg, file_name.data(), static_cast<int>(file_name.size()));
-   // specific read function
-   qp_read_ASL(asl_fg, nl, ASL_findgroups);
-
-   // constraints
-   if (asl_fg->i.n_con_ != static_cast<int>(this->number_constraints)) {
-      throw std::length_error("AMPLModel.set_function_types: inconsistent number of constraints");
+   // AMPL orders the constraints based on the function type: nonlinear first, then linear
+   for (size_t j: Range(static_cast<size_t>(asl->i.nlc_))) {
+      this->constraint_type[j] = NONLINEAR;
    }
-   this->constraint_type.reserve(this->number_constraints);
-
-   // determine the type of each constraint and objective function
-   // determine if the problem is nonlinear (non-quadratic objective or nonlinear constraints)
-   this->problem_type = LINEAR;
-   int* rowq;
-   int* colqp;
-   double* delsqp;
-   for (size_t j: Range(this->number_constraints)) {
-      int qp = nqpcheck_ASL(asl_fg, static_cast<int>(-(j + 1)), &rowq, &colqp, &delsqp);
-
-      if (0 < qp) {
-         this->constraint_type[j] = QUADRATIC;
-         this->problem_type = NONLINEAR;
-      }
-      else if (qp == 0) {
-         this->constraint_type[j] = LINEAR;
-         this->linear_constraints.push_back(j);
-      }
-      else {
-         this->constraint_type[j] = NONLINEAR;
-         this->problem_type = NONLINEAR;
-      }
+   for (size_t j: Range(static_cast<size_t>(asl->i.nlc_), this->number_constraints)) {
+      this->constraint_type[j] = LINEAR;
+      this->linear_constraints.push_back(j);
    }
-   // objective function
-   int qp = nqpcheck_ASL(asl_fg, 0, &rowq, &colqp, &delsqp);
-   if (0 < qp) {
-      if (this->problem_type == LINEAR) {
-         this->problem_type = QUADRATIC;
-      }
-   }
-   else if (qp != 0) {
-      this->problem_type = NONLINEAR;
-   }
-   qp_opify_ASL(asl_fg);
-
-   // deallocate memory
-   ASL_free(&asl_fg);
 }
