@@ -167,15 +167,10 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
       double step_length) {
    // post-process the trial iterate
    this->subproblem->postprocess_iterate(this->current_problem(), trial_iterate);
-<<<<<<< HEAD
-
-   bool accept = false;
-=======
    // compute progress measures
    this->compute_progress_measures(current_iterate, trial_iterate, direction, step_length);
 
    bool accept_iterate = false;
->>>>>>> origin
    if (direction.norm == 0.) {
       DEBUG << "Zero step acceptable\n";
       trial_iterate.evaluate_objective(this->original_model);
@@ -194,11 +189,7 @@ bool FeasibilityRestoration::is_iterate_acceptable(Statistics& statistics, Itera
             predicted_reduction, this->current_problem().get_objective_multiplier());
    }
 
-<<<<<<< HEAD
-   if (accept) {
-=======
    if (accept_iterate) {
->>>>>>> origin
       // compute the primal-dual residuals
       ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
       if (this->current_phase == Phase::OPTIMALITY) {

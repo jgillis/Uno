@@ -78,78 +78,54 @@ bool FunnelStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate
    DEBUG << "\t\t" <<*this->funnel << '\n';
 
    bool accept = false;
-
    bool funnel_reduction_mechanism = false;
-   
-   // std::cout << "Phase in funnel mechanism" << static_cast<int>(this->get_phase()) << std::endl;
-   // this->current_phase = Phase::FEASIBILITY_RESTORATION;
+   bool funnel_acceptable = false;
+
    DEBUG << "\t\tPhase in funnel mechanism" << static_cast<int>(this->current_phase) << "\n";
 
-   // if (this->current_phase == Phase::OPTIMALITY){
    if (this->current_phase == 2){
       DEBUG  << "\t\tCurrent phase OPTIMALITY\n";
+      funnel_acceptable = this->funnel->acceptable(trial_progress_measures.infeasibility);
    } else if (this->current_phase == 1) {
       DEBUG  << "\t\tCurrent phase RESTORATION\n";
+      funnel_acceptable = this->funnel->acceptable(trial_optimality_measure);
    } else {
-      DEBUG << "WARNING!!: Phase is not in {1,2}!!\n";
+      DEBUG << "\t\tWARNING!!: Phase is not in {1,2}!!\n";
    }
-
-   // if (this->current_phase == Phase::OPTIMALITY){
-   // if (this->current_phase == 2){
    
-      // check acceptance
-      const bool funnel_acceptable = this->funnel->acceptable(trial_progress_measures.infeasibility);
-      
-      if (funnel_acceptable) {
-         DEBUG << "\t\tFunnel condition acceptable\n";
+   // check acceptance   
+   if (funnel_acceptable) {
+      DEBUG << "\t\tFunnel condition acceptable\n";
 
-         // check acceptance wrt current point
-         // const bool improves_current_iterate = this->funnel->acceptable_wrt_current_iterate(current_progress_measures.infeasibility,
-         //       current_optimality_measure, trial_progress_measures.infeasibility, trial_optimality_measure);
-         // if (improves_current_iterate) {
-         //    DEBUG << "Acceptable with respect to current point\n";
+         const double actual_reduction = this->funnel->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
+               trial_optimality_measure);
+         DEBUG << "\t\tActual reduction: " << actual_reduction << '\n';
 
-            const double actual_reduction = this->funnel->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
-                  trial_optimality_measure);
-            DEBUG << "\t\tActual reduction: " << actual_reduction << '\n';
-
-            DEBUG << "\t\tCheck the switching condition ....\n";
-            // switching condition: the unconstrained predicted reduction is sufficiently positive
-            if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
-               // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
-               DEBUG << "\t\tCheck the armijo condition for descent ....\n";
-               if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
-                  DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition\n";
-                  accept = true;
-               }
-               else { // switching condition holds, but not Armijo condition
-                  DEBUG << "\t\tArmijo condition not satisfied, trial iterate REJECTED\n";
-               }
+         DEBUG << "\t\tCheck the switching condition ....\n";
+         // switching condition: the unconstrained predicted reduction is sufficiently positive
+         if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
+            // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
+            DEBUG << "\t\tCheck the armijo condition for descent ....\n";
+            if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
+               DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition\n";
+               accept = true;
+               // decrease funnel here ......
             }
-            else {
-               DEBUG << "\t\tTrial iterate violates switching condition ...\n";
-               funnel_reduction_mechanism = true;
+            else { // switching condition holds, but not Armijo condition
+               DEBUG << "\t\tArmijo condition not satisfied, trial iterate REJECTED\n";
             }
-            // else { // switching condition violated: predicted reduction is not promising
-            //    this->funnel->add(current_progress_measures.infeasibility, current_optimality_measure);
-            //    DEBUG << "Trial iterate was accepted by violating switching condition\n";
-            //    DEBUG << "Current iterate was added to the funnel\n";
-            //    accept = true;
-            // }
+         }
+         else {
+            DEBUG << "\t\tTrial iterate violates switching condition ...\n";
+            funnel_reduction_mechanism = true;
+            accept = true; // accept the step and reduce the tr-radius
+         }
 
-         // }
-         // else {
-         //    DEBUG << "Not acceptable with respect to current point\n";
-         // }
-      } else {
-         funnel_reduction_mechanism = true;
-         DEBUG << "\t\tFunnel condition NOT acceptable\n";
-      }
-
-   // }
-   // else {
-   //    funnel_reduction_mechanism = true;
-   // }
+   } else {
+      funnel_reduction_mechanism = false;
+      // step is rejected
+      DEBUG << "\t\tFunnel condition NOT acceptable\n";
+   }
 
    if (funnel_reduction_mechanism){
        DEBUG << "\t\tEntering funnel reduction mechanism\n";
