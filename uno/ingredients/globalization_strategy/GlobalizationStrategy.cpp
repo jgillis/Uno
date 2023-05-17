@@ -17,13 +17,3 @@ void GlobalizationStrategy::check_finiteness([[maybe_unused]] const ProgressMeas
    assert(not std::isnan(progress.optimality(objective_multiplier)) && is_finite(progress.optimality(objective_multiplier)) && "The optimality measure is not finite.");
    assert(not std::isnan(progress.auxiliary_terms) && "The auxiliary measure is not a number.");
 }
-
-// void GlobalizationStrategy::set_phase(Phase new_phase){
-//    std::cout << "Setting the phase to" << static_cast<int>(new_phase) << std::endl;
-//    this->current_phase = new_phase;
-//    std::cout << "Phase is now" << static_cast<int>(this->current_phase) << std::endl;
-// }
-
-// Phase GlobalizationStrategy::get_phase(){
-//    return this->current_phase;
-// }

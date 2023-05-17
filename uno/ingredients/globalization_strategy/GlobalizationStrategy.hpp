@@ -27,7 +27,10 @@ public:
 
    virtual void reset() = 0;
    virtual void register_current_progress(const ProgressMeasures& current_progress) = 0;
-   int current_phase;
+   
+   // Newly added variables
+   bool current_iterate_acceptable_to_funnel;
+   double funnel_width;
 
 protected:
    const double armijo_decrease_fraction; /*!< Sufficient reduction constant */

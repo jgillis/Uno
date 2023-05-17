@@ -6,6 +6,8 @@
 #include "filter_strategy/LeyfferFilterStrategy.hpp"
 #include "filter_strategy/WaechterFilterStrategy.hpp"
 #include "funnel_strategy/FunnelStrategy.hpp"
+#include "funnel_strategy/FunnelRestorationStrategy.hpp"
+#include "funnel_strategy/FunnelOptimalityStrategy.hpp"
 
 std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Statistics& statistics, const std::string& strategy_type,
       bool accept_when_switching_violated, const Options& options) {
@@ -20,6 +22,12 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Sta
    }
    else if (strategy_type == "funnel_strategy") {
       return std::make_unique<FunnelStrategy>(statistics, options);
+   }
+   else if (strategy_type == "funnel_restoration_strategy") {
+      return std::make_unique<FunnelRestorationStrategy>(statistics, options);
+   }
+   else if (strategy_type == "funnel_optimality_strategy") {
+      return std::make_unique<FunnelOptimalityStrategy>(statistics, options);
    }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }

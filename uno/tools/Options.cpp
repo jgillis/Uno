@@ -135,7 +135,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["sparse_format"] = "CSC";
    }
    else if (preset_name == "funnelsqp") {
-      options["constraint_relaxation_strategy"] = "feasibility_restoration";
+      options["constraint_relaxation_strategy"] = "feasibility_restoration_funnel";
       options["subproblem"] = "QP";
       options["globalization_mechanism"] = "TR";
       options["globalization_strategy"] = "funnel_strategy";
@@ -156,6 +156,8 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["funnel_fact"] = "1.25";
       options["funnel_switching_infeasibility_exponent"] = "2";
       options["funnel_capacity"] = "50";
+      options["feasibility_restoration_restoration_phase_strategy"] = "funnel_restoration_strategy";
+      options["feasibility_restoration_optimality_phase_strategy"] = "funnel_optimality_strategy";
    }
 }
 

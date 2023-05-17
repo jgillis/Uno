@@ -3,6 +3,7 @@
 
 #include "ConstraintRelaxationStrategyFactory.hpp"
 #include "FeasibilityRestoration.hpp"
+#include "FeasibilityRestorationFunnel.hpp"
 #include "l1Relaxation.hpp"
 
 std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactory::create(Statistics& statistics, const Model& model,
@@ -13,6 +14,9 @@ std::unique_ptr<ConstraintRelaxationStrategy> ConstraintRelaxationStrategyFactor
    }
    else if (constraint_relaxation_type == "l1_relaxation") {
       return std::make_unique<l1Relaxation>(statistics, model, options);
+   }
+   else if (constraint_relaxation_type == "feasibility_restoration_funnel") {
+      return std::make_unique<FeasibilityRestorationFunnel>(statistics, model, options);
    }
    throw std::invalid_argument("ConstraintRelaxationStrategy " + constraint_relaxation_type + " is not supported");
 }

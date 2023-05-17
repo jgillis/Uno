@@ -45,78 +45,7 @@ double Funnel::get_funnel_size(){
    return this->current_upper_bound;
 }
 
-// bool Funnel::is_empty() const {
-//    return (this->number_entries == 0);
-// }
-
-// double Funnel::get_smallest_infeasibility() const {
-//    if (not this->is_empty()) {
-//       // left-most entry has the lowest infeasibility. Relax it with the envelope coefficient
-//       return this->parameters.beta * this->infeasibility[0];
-//    }
-//    else { // funnel empty
-//       return this->parameters.beta * this->upper_bound;
-//    }
-// }
-
-// void Funnel::left_shift(size_t start, size_t shift_size) {
-//    for (size_t position: Range(start, this->number_entries - shift_size)) {
-//       this->infeasibility[position] = this->infeasibility[position + shift_size];
-//       this->optimality[position] = this->optimality[position + shift_size];
-//    }
-// }
-
-// void Funnel::right_shift(size_t start, size_t shift_size) {
-//    for (size_t position: Range<BACKWARD>(this->number_entries, start)) {
-//       this->infeasibility[position] = this->infeasibility[position - shift_size];
-//       this->optimality[position] = this->optimality[position - shift_size];
-//    }
-// }
-
-// //  add (infeasibility_measure, optimality_measure) to the funnel
-// void Funnel::add(double infeasibility_measure, double optimality_measure) {
-//    // remove dominated funnel entries
-//    // find position in funnel without margin
-//    size_t start_position = 0;
-//    while (start_position < this->number_entries && this->infeasibility[start_position] < infeasibility_measure) {
-//       start_position++;
-//    }
-
-//    // find redundant entries starting from position
-//    size_t end_position = start_position;
-//    while (end_position < this->number_entries && optimality_measure <= this->optimality[end_position]) {
-//       end_position++;
-//    }
-
-//    // remove entries [position:end_position] from funnel
-//    const size_t number_redundant_entries = end_position - start_position;
-//    if (0 < number_redundant_entries) {
-//       this->left_shift(start_position, number_redundant_entries);
-//       this->number_entries -= number_redundant_entries;
-//    }
-
-//    // check sufficient space available for new entry (remove last entry, if not)
-//    if (this->number_entries >= this->capacity) {
-//       this->upper_bound = this->parameters.beta * std::max(this->upper_bound, this->infeasibility[this->number_entries - 1]);
-//       // create space in funnel: remove last entry
-//       this->number_entries--;
-//    }
-
-//    // add new entry to the funnel at position
-//    start_position = 0;
-//    while (start_position < this->number_entries && infeasibility_measure >= this->parameters.beta * this->infeasibility[start_position]) {
-//       start_position++;
-//    }
-//    // shift entries by one to right to make room for new entry
-//    if (start_position < this->number_entries) {
-//       this->right_shift(start_position, 1);
-//    }
-//    // add new entry to funnel
-
-//    this->infeasibility[start_position] = infeasibility_measure;
-//    this->optimality[start_position] = optimality_measure;
-//    this->number_entries++;
-// }
+// bool Fu
 
 //  add (infeasibility_measure, optimality_measure) to the funnel
 void Funnel::add(double infeasibility_measure, double optimality_measure) {

@@ -204,6 +204,8 @@ l1_constraint_violation_coefficient 1
 ##### feasibility restoration options #####
 # test linearized feasibility when switching back to phase 2
 feasibility_restoration_test_linearized_feasibility no
+feasibility_restoration_restoration_phase_strategy leyffer_filter_strategy
+feasibility_restoration_optimality_phase_strategy leyffer_filter_strategy
 
 ##### barrier subproblem options #####
 barrier_initial_parameter 0.1
