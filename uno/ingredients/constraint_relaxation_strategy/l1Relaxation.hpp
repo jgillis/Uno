@@ -28,10 +28,9 @@ public:
    // direction computation
    [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
          WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
+   [[nodiscard]] Direction compute_feasible_direction(Statistics& statistics, Iterate& current_iterate, const std::vector<double>& initial_point,
          WarmstartInformation& warmstart_information) override;
-   [[nodiscard]] Direction solve_feasibility_problem(Statistics& statistics, Iterate& current_iterate,
-         const std::vector<double>& initial_point, WarmstartInformation& warmstart_information) override;
+   void switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) override;
 
    // trial iterate acceptance
    void compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction, double step_length) override;
@@ -43,33 +42,41 @@ public:
 
 protected:
    const l1RelaxedProblem feasibility_problem;
-   l1RelaxedProblem relaxed_problem;
+   l1RelaxedProblem l1_relaxed_problem;
    std::unique_ptr<Subproblem> subproblem;
    const std::unique_ptr<GlobalizationStrategy> globalization_strategy;
    double penalty_parameter;
+   const double tolerance;
    const l1RelaxationParameters parameters;
-   const double small_duals_threshold{1e-8}; // TODO put in option file
-   const double l1_constraint_violation_coefficient;
+   const double small_duals_threshold;
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
 
-   Direction solve_subproblem(Statistics& statistics, Iterate& current_iterate, const NonlinearProblem& problem,
+   Direction solve_sequence_of_relaxed_problems(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
+   Direction solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
          const WarmstartInformation& warmstart_information);
-   Direction solve_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
+   Direction solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
          const WarmstartInformation& warmstart_information);
+
+   // functions that decrease the penalty parameter to enforce particular conditions
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
-   [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual, double residual_lowest_violation) const;
-   [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction, const Direction& direction_lowest_violation) const;
    double compute_dual_error(Iterate& current_iterate);
-   void check_exact_relaxation(Iterate& iterate) const;
+   [[nodiscard]] Direction enforce_linearized_residual_sufficient_decrease(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information);
+   [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual,
+         double residual_lowest_violation) const;
+   [[nodiscard]] Direction enforce_descent_direction_for_l1_merit(Statistics& statistics, Iterate& current_iterate, Direction& direction,
+         const Direction& direction_lowest_violation, WarmstartInformation& warmstart_information);
+   [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
+         const Direction& direction_lowest_violation) const;
 
    // progress measures and their local models
-   void set_infeasibility_measure(Iterate& iterate);
-   [[nodiscard]] double generate_predicted_infeasibility_reduction_model(const Iterate& current_iterate, const Direction& direction,
-         double step_length) const;
-   void set_optimality_measure(Iterate& iterate);
-   [[nodiscard]] std::function<double (double)> generate_predicted_optimality_reduction_model(const Iterate& current_iterate,
-         const Direction& direction, double step_length) const;
+   void set_progress_measures_for_l1_relaxed_problem(Iterate& iterate);
+   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models_for_l1_relaxed_problem(const Iterate& current_iterate, const Direction& direction,
+         double step_length);
+
+   void add_statistics(Statistics& statistics, const Iterate& trial_iterate) const;
+   void check_exact_relaxation(Iterate& iterate) const;
 };
 
 #endif //UNO_L1RELAXATION_H
