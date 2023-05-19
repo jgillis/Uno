@@ -139,7 +139,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["subproblem"] = "QP";
       options["globalization_mechanism"] = "TR";
       options["globalization_strategy"] = "funnel_strategy";
-      options["filter_type"] = "standard";
+      // options["filter_type"] = "standard";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L2";
       options["sparse_format"] = "CSC";
@@ -147,8 +147,10 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["l1_constraint_violation_coefficient"] = "1.";
       options["enforce_linear_constraints"] = "yes";
       options["tolerance"] = "1e-6";
+      options["TR_min_radius"] = "1e-8";
+      options["feasibility_restoration_test_linearized_feasibility"] = "yes";
       options["terminate_with_small_step"] = "yes";
-      options["small_step_threshold"] = "1e-6";
+
       options["funnel_beta"] = "0.999";
       options["funnel_gamma"] = "0.001";
       options["funnel_delta"] = "0.999";

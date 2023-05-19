@@ -54,6 +54,9 @@ private:
    void switch_to_feasibility_restoration(Iterate& current_iterate, WarmstartInformation& warmstart_information);
    void switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate);
 
+   void synchronize_from_restoration_to_optimality_phase();
+   void synchronize_from_optimality_to_restoration_phase();
+
    // progress measures and their local models
    void set_progress_measures_for_optimality_problem(Iterate& iterate);
    void set_progress_measures_for_feasibility_problem(Iterate& iterate);

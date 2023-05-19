@@ -67,7 +67,16 @@ bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, co
 
    // We are in restoration phase, i.e., optimality measure contains the infeasibility!
    if (accept){
-      funnel_acceptable = this->is_infeasibility_acceptable(trial_optimality_measure);
+      if (this->is_infeasibility_acceptable_to_funnel(trial_optimality_measure)){
+         this->current_iterate_acceptable_to_funnel = true;
+      }
+      else {
+         this->current_iterate_acceptable_to_funnel = false;
+      }
+
+
+
+      funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_optimality_measure);
       // check acceptance   
       if (funnel_acceptable) {
          DEBUG << "\t\tFunnel condition satisfied\n";
@@ -75,7 +84,11 @@ bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, co
          // do update 1
          this->update_funnel_width(current_optimality_measure, 
                                     trial_optimality_measure);
-         this->funnel_width = this->get_funnel_width();   
+         this->funnel_width = this->get_funnel_width(); 
+         this->current_iterate_acceptable_to_funnel = true;  
+      }
+      else {
+         this->current_iterate_acceptable_to_funnel = false;
       }
       // } else {
 
@@ -86,7 +99,6 @@ bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, co
       //    this->funnel_width = this->funnel->get_funnel_size();   
       // }
       // Funnel has changed, check, if still acceptable
-      this->current_iterate_acceptable_to_funnel = this->is_infeasibility_acceptable(trial_optimality_measure);
    }
 
    return accept;

@@ -46,7 +46,7 @@ void FunnelStrategy::register_current_progress(const ProgressMeasures& /*current
    // this->funnel->add(current_progress_measures.infeasibility, current_optimality_measure);
 }
 
-bool FunnelStrategy::is_infeasibility_acceptable(double infeasibility_measure) const {
+bool FunnelStrategy::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const {
    if (infeasibility_measure <= this->funnel_width){
       return true;
    }
@@ -54,6 +54,10 @@ bool FunnelStrategy::is_infeasibility_acceptable(double infeasibility_measure) c
       DEBUG << "\t\tNot acceptable to funnel.\n";
       return false;
    }
+}
+
+bool FunnelStrategy::is_infeasibility_acceptable(double infeasibility_measure) const {
+   return this->is_infeasibility_acceptable_to_funnel(infeasibility_measure);
 }
 
 bool FunnelStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {

@@ -43,7 +43,7 @@ bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, con
    bool funnel_reduction_mechanism = false;
    bool funnel_acceptable = false;
 
-   funnel_acceptable = this->is_infeasibility_acceptable(trial_progress_measures.infeasibility);
+   funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_progress_measures.infeasibility);
    
    // check acceptance   
    if (funnel_acceptable) {
@@ -87,7 +87,7 @@ bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, con
    }
 
    if (accept){
-      if (this->is_infeasibility_acceptable(trial_infeasibility_measure)){
+      if (this->is_infeasibility_acceptable_to_funnel(trial_infeasibility_measure)){
          this->current_iterate_acceptable_to_funnel = true;
       }
       else {

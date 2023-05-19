@@ -40,6 +40,7 @@ public:
 
 
    void initialize(const Iterate& initial_iterate) override;
+   bool is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const ;
    [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress_measures,
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
