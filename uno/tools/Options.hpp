@@ -27,6 +27,7 @@ private:
 };
 
 Options get_default_options(const std::string& file_name);
+void find_preset(const std::string& preset_name, Options& options);
 void get_command_line_options(int argc, char* argv[], Options& options);
 void set_logger(const std::string& logger_level);
 
