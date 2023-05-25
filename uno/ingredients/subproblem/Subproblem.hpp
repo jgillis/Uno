@@ -34,9 +34,11 @@ public:
    virtual void set_elastic_variable_values(const l1RelaxedProblem& problem, Iterate& current_iterate) = 0;
    virtual void exit_feasibility_problem(const NonlinearProblem& problem, Iterate& trial_iterate) = 0;
 
-   // globalization metrics
+   // progress measures
+   [[nodiscard]] virtual std::function<double(double)> compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+         const Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
    virtual void set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) = 0;
-   [[nodiscard]] virtual double generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
+   [[nodiscard]] virtual double compute_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
          const Iterate& current_iterate, const Direction& direction, double step_length) const = 0;
 
    virtual void postprocess_iterate(const NonlinearProblem& model, Iterate& iterate) = 0;
