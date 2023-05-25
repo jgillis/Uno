@@ -1,12 +1,12 @@
 // Copyright (c) 2018-2023 Charlie Vanaret
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
-#include <cassert>
 #include <functional>
 #include "FeasibilityRestorationFunnel.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategyFactory.hpp"
 #include "ingredients/subproblem/SubproblemFactory.hpp"
 #include "linear_algebra/SymmetricIndefiniteLinearSystem.hpp"
+#include "linear_algebra/view.hpp"
 
 FeasibilityRestorationFunnel::FeasibilityRestorationFunnel(Statistics& statistics, const Model& model, const Options& options) :
       ConstraintRelaxationStrategy(model, options),
@@ -20,7 +20,6 @@ FeasibilityRestorationFunnel::FeasibilityRestorationFunnel(Statistics& statistic
       restoration_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("feasibility_restoration_restoration_phase_strategy"), false, options)),
       optimality_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("feasibility_restoration_optimality_phase_strategy"), true, options)),
       
-      l1_constraint_violation_coefficient(options.get_double("l1_constraint_violation_coefficient")),
       tolerance(options.get_double("tolerance")),
       test_linearized_feasibility(options.get_bool("feasibility_restoration_test_linearized_feasibility")) {
    statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
@@ -30,12 +29,12 @@ void FeasibilityRestorationFunnel::initialize(Iterate& initial_iterate) {
    this->subproblem->generate_initial_iterate(this->optimality_problem, initial_iterate);
 
    // compute the progress measures and residuals of the initial point
-   this->set_progress_measures_for_optimality_problem(initial_iterate);
-   ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, initial_iterate, this->residual_norm);
+   this->set_progress_measures(this->optimality_problem, initial_iterate);
+   this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, initial_iterate);
 
    // initialize the globalization strategies
-   this->optimality_phase_strategy->initialize(initial_iterate);
    this->restoration_phase_strategy->initialize(initial_iterate);
+   this->optimality_phase_strategy->initialize(initial_iterate);
 
    // Newly added for Funnel
    this->restoration_phase_strategy->funnel_width = this->optimality_phase_strategy->funnel_width;
@@ -43,7 +42,7 @@ void FeasibilityRestorationFunnel::initialize(Iterate& initial_iterate) {
 
 Direction FeasibilityRestorationFunnel::compute_feasible_direction(Statistics& statistics, Iterate& current_iterate,
       WarmstartInformation& warmstart_information) {
-   // solve the optimality problem
+   // if we are in the optimality phase, solve the optimality problem
    if (this->current_phase == Phase::OPTIMALITY) {
       try {
          if (!this->optimality_phase_strategy->current_iterate_acceptable_to_funnel){
@@ -67,7 +66,8 @@ Direction FeasibilityRestorationFunnel::compute_feasible_direction(Statistics& s
          this->switch_to_feasibility_problem(current_iterate, warmstart_information);
       }
    }
-   // feasibility problem: minimize constraint violation
+
+   // solve the feasibility problem (min constraint violation)
    DEBUG << "Solving the feasibility subproblem\n";
    // note: failure of regularization should not happen here, since the feasibility Jacobian is full rank
    return this->solve_subproblem(statistics, this->feasibility_problem, current_iterate, warmstart_information);
@@ -80,78 +80,6 @@ Direction FeasibilityRestorationFunnel::compute_feasible_direction(Statistics& s
    return this->compute_feasible_direction(statistics, current_iterate, warmstart_information);
 }
 
-void FeasibilityRestorationFunnel::switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) {
-   if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
-      throw std::runtime_error("NOOOOPE\n");
-   }
-   
-   this->switch_to_feasibility_restoration(current_iterate, warmstart_information);
-}
-
-Direction FeasibilityRestorationFunnel::solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
-      WarmstartInformation& warmstart_information) {
-   if (this->switched_to_optimality_phase) {
-      this->switched_to_optimality_phase = false;
-      warmstart_information.set_cold_start();
-   }
-
-   Direction direction = this->subproblem->solve(statistics, problem, current_iterate, warmstart_information);
-   direction.norm = norm_inf(direction.primals, Range(this->optimality_problem.number_variables));
-   direction.multipliers.objective = problem.get_objective_multiplier();
-   DEBUG2 << direction << '\n';
-   return direction;
-}
-
-void FeasibilityRestorationFunnel::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
-      double step_length) {
-   // refresh the auxiliary measure for the current iterate
-   if (this->subproblem->subproblem_definition_changed) {
-      DEBUG << "The subproblem definition changed, the auxiliary measure is recomputed\n";
-      this->restoration_phase_strategy->reset();
-      this->optimality_phase_strategy->reset();
-      this->subproblem->set_auxiliary_measure(this->current_problem(), current_iterate);
-      this->subproblem->subproblem_definition_changed = false;
-   }
-   // std::cout << "Current iterate in progress measure: " << current_iterate << std::endl;
-   std::cout << "Test linearized feasibility: " << this->test_linearized_feasibility << std::endl;
-   // std::cout << "lin feas : " << ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, step_length) << std::endl;
-   std::cout << " tol: " << this->tolerance << std::endl;
-
-   // possibly go from restoration phase to optimality phase
-   if (this->current_phase == Phase::FEASIBILITY_RESTORATION && (not this->test_linearized_feasibility ||
-         ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, step_length) <=
-               this->tolerance)) {
-      // if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
-      // trial_iterate.evaluate_constraints(this->original_model);
-      // const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints,
-      //       this->progress_norm);
-
-      // std::cout << "Current iterate infeasibility" << current_iterate.progress.optimality(1.) << std::endl;
-      // std::cout << "Trial iterate infeasibility" << trial_infeasibility << std::endl;
-      // std::cout << "Subproblem should be feasible with the given direction..." << std::endl;
-
-      // if (this->restoration_phase_strategy->current_iterate_acceptable_to_funnel &&
-      //    trial_infeasibility <= current_iterate.progress.optimality(1.)) {
-      //    std::cout << "Feasibility is improved after restoration" << std::endl;
-      //    this->switch_to_optimality(current_iterate, trial_iterate);
-      // }
-      if (this->restoration_phase_strategy->current_iterate_acceptable_to_funnel) {
-         // std::cout << "Feasibility is improved after restoration" << std::endl;
-         this->switch_to_optimality(current_iterate, trial_iterate);
-      }
-      // if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility) && this->restoration_phase_strategy->current_iterate_acceptable_to_funnel) {
-      //    this->switch_to_optimality(current_iterate, trial_iterate);
-      // }
-   }
-
-   // evaluate the progress measures of the trial iterate
-   if (this->current_phase == Phase::OPTIMALITY) {
-      this->set_progress_measures_for_optimality_problem(trial_iterate);
-   }
-   else {
-      this->set_progress_measures_for_feasibility_problem(trial_iterate);
-   }
-}
 
 void FeasibilityRestorationFunnel::synchronize_from_restoration_to_optimality_phase() {
    this->optimality_phase_strategy->funnel_width = this->restoration_phase_strategy->funnel_width;
@@ -163,7 +91,10 @@ void FeasibilityRestorationFunnel::synchronize_from_optimality_to_restoration_ph
    this->restoration_phase_strategy->current_iterate_acceptable_to_funnel = this->optimality_phase_strategy->current_iterate_acceptable_to_funnel;
 }
 
-void FeasibilityRestorationFunnel::switch_to_feasibility_restoration(Iterate& current_iterate, WarmstartInformation& warmstart_information) {
+void FeasibilityRestorationFunnel::switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) {
+   if (this->current_phase == Phase::FEASIBILITY_RESTORATION) {
+      throw std::runtime_error("FeasibilityRestorationFunnel::switch_to_feasibility_problem: already in feasibility restoration.\n");
+   }
    DEBUG << "Switching from optimality to restoration phase\n";
    this->synchronize_from_optimality_to_restoration_phase();
 
@@ -173,19 +104,72 @@ void FeasibilityRestorationFunnel::switch_to_feasibility_restoration(Iterate& cu
    this->subproblem->set_elastic_variable_values(this->feasibility_problem, current_iterate);
    DEBUG2 << "Current iterate:\n" << current_iterate << '\n';
 
-   // refresh the progress measures of the current iterate
-   this->set_progress_measures_for_feasibility_problem(current_iterate);
-
+   // compute the progress measures of the current iterate for the feasibility problem
+   this->set_progress_measures(this->feasibility_problem, current_iterate);
    current_iterate.multipliers.objective = 0.;
+
    this->restoration_phase_strategy->reset();
    this->restoration_phase_strategy->register_current_progress(current_iterate.progress);
    warmstart_information.set_cold_start();
 }
 
+Direction FeasibilityRestorationFunnel::solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
+      WarmstartInformation& warmstart_information) {
+   if (this->switched_to_optimality_phase) {
+      this->switched_to_optimality_phase = false;
+      warmstart_information.set_cold_start();
+   }
+
+   Direction direction = this->subproblem->solve(statistics, problem, current_iterate, warmstart_information);
+   direction.norm = norm_inf(view(direction.primals, this->optimality_problem.number_variables));
+   direction.multipliers.objective = problem.get_objective_multiplier();
+   DEBUG2 << direction << '\n';
+   return direction;
+}
+
+
+void FeasibilityRestorationFunnel::compute_progress_measures(Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
+      double step_length) {
+   // refresh the auxiliary measure for the current iterate
+   if (this->subproblem->subproblem_definition_changed) {
+      DEBUG << "The subproblem definition changed, the auxiliary measure is recomputed\n";
+      this->restoration_phase_strategy->reset();
+      this->optimality_phase_strategy->reset();
+      this->subproblem->set_auxiliary_measure(this->current_problem(), current_iterate);
+      this->subproblem->subproblem_definition_changed = false;
+   }
+
+   // possibly go from restoration phase to optimality phase
+   // if (this->current_phase == Phase::FEASIBILITY_RESTORATION && (not this->test_linearized_feasibility ||
+   //       this->original_model.compute_linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
+   //             current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <= this->tolerance)) {
+   if (this->current_phase == Phase::FEASIBILITY_RESTORATION && (not this->test_linearized_feasibility ||
+      this->original_model.compute_linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
+               current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <= this->tolerance)) {
+      //if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
+      trial_iterate.evaluate_constraints(this->original_model);
+      const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
+      // if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
+      //    this->switch_to_optimality(current_iterate, trial_iterate);
+      // }
+      if (this->restoration_phase_strategy->current_iterate_acceptable_to_funnel) {
+         // std::cout << "Feasibility is improved after restoration" << std::endl;
+         this->switch_to_optimality(current_iterate, trial_iterate);
+      }
+   }
+
+   // evaluate the progress measures of the trial iterate
+   if (this->current_phase == Phase::OPTIMALITY) {
+      this->set_progress_measures(this->optimality_problem, trial_iterate);
+   }
+   else {
+      this->set_progress_measures(this->feasibility_problem, trial_iterate);
+   }
+}
+
 void FeasibilityRestorationFunnel::switch_to_optimality(Iterate& current_iterate, Iterate& trial_iterate) {
    DEBUG << "Switching from restoration to optimality phase\n";
    this->synchronize_from_restoration_to_optimality_phase();
-
 
    this->current_phase = Phase::OPTIMALITY;
    current_iterate.set_number_variables(this->optimality_problem.number_variables);
@@ -194,7 +178,7 @@ void FeasibilityRestorationFunnel::switch_to_optimality(Iterate& current_iterate
    this->switched_to_optimality_phase = true;
 
    // refresh the progress measures of current iterate
-   this->set_progress_measures_for_optimality_problem(current_iterate);
+   this->set_progress_measures(this->optimality_problem, current_iterate);
    current_iterate.multipliers.objective = 1.;
    trial_iterate.multipliers.objective = 1.;
 }
@@ -212,9 +196,7 @@ bool FeasibilityRestorationFunnel::is_iterate_acceptable(Statistics& statistics,
    }
    else {
       // evaluate the predicted reduction
-      ProgressMeasures predicted_reduction = (this->current_phase == Phase::OPTIMALITY) ?
-            this->compute_predicted_reduction_models_for_optimality_problem(current_iterate, direction, step_length) :
-            this->compute_predicted_reduction_models_for_feasibility_problem(current_iterate, direction, step_length);
+      ProgressMeasures predicted_reduction = this->compute_predicted_reduction_models(current_iterate, direction, step_length);
 
       // invoke the globalization strategy for acceptance
       GlobalizationStrategy& current_phase_strategy = this->current_globalization_strategy();
@@ -223,25 +205,25 @@ bool FeasibilityRestorationFunnel::is_iterate_acceptable(Statistics& statistics,
    }
 
    if (accept_iterate) {
-      // compute the primal-dual residuals
-      ConstraintRelaxationStrategy::compute_primal_dual_residuals(this->optimality_problem, trial_iterate, this->residual_norm);
-      if (this->current_phase == Phase::OPTIMALITY) {
-         statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
-         statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
-         if (this->original_model.is_constrained()) {
-            statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
-         }
-      }
-      else {
-         statistics.add_statistic("complementarity", trial_iterate.residuals.feasibility_complementarity);
-         statistics.add_statistic("stationarity", trial_iterate.residuals.feasibility_stationarity);
-         if (this->original_model.is_constrained()) {
-            statistics.add_statistic("primal infeas.", trial_iterate.progress.optimality(1.));
-         }
-      }
-      statistics.add_statistic("phase", static_cast<int>(this->current_phase));
+      this->compute_primal_dual_residuals(this->original_model, this->feasibility_problem, trial_iterate);
+      this->add_statistics(statistics, trial_iterate);
    }
    return accept_iterate;
+}
+
+void FeasibilityRestorationFunnel::set_progress_measures(const NonlinearProblem& problem, Iterate& iterate) const {
+   problem.set_infeasibility_measure(iterate, this->progress_norm);
+   problem.set_optimality_measure(iterate);
+   this->subproblem->set_auxiliary_measure(problem, iterate);
+}
+
+ProgressMeasures FeasibilityRestorationFunnel::compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction, double step_length) {
+   const NonlinearProblem& current_problem = this->current_problem();
+   return {
+      current_problem.compute_predicted_infeasibility_reduction_model(current_iterate, direction, step_length, this->progress_norm),
+      this->subproblem->compute_predicted_optimality_reduction_model(current_problem, current_iterate, direction, step_length),
+      this->subproblem->compute_predicted_auxiliary_reduction_model(current_problem, current_iterate, direction, step_length)
+   };
 }
 
 const NonlinearProblem& FeasibilityRestorationFunnel::current_problem() const {
@@ -261,81 +243,49 @@ void FeasibilityRestorationFunnel::set_trust_region_radius(double trust_region_r
    this->subproblem->set_trust_region_radius(trust_region_radius);
 }
 
-/* progress measures */
+double FeasibilityRestorationFunnel::compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+      const Multipliers& multipliers) const {
+   // bound constraints
+   VectorExpression<double> variable_complementarity(this->original_model.number_variables, [&](size_t i) {
+      if (0. < multipliers.lower_bounds[i]) {
+         return multipliers.lower_bounds[i] * (primals[i] - this->original_model.get_variable_lower_bound(i));
+      }
+      if (multipliers.upper_bounds[i] < 0.) {
+         return multipliers.upper_bounds[i] * (primals[i] - this->original_model.get_variable_upper_bound(i));
+      }
+      return 0.;
+   });
 
-void FeasibilityRestorationFunnel::set_progress_measures_for_optimality_problem(Iterate& iterate) {
-   // infeasibility measure: constraint violation
-   iterate.evaluate_constraints(this->original_model);
-   iterate.progress.infeasibility = this->original_model.compute_constraint_violation(iterate.evaluations.constraints, this->progress_norm);
-
-   // optimality measure: scaled objective
-   iterate.evaluate_objective(this->original_model);
-   const double objective = iterate.evaluations.objective;
-   iterate.progress.optimality = [=](double objective_multiplier) {
-      return objective_multiplier*objective;
-   };
-
-   // auxiliary measure
-   this->subproblem->set_auxiliary_measure(this->optimality_problem, iterate);
+   // constraints
+   VectorExpression<double> constraint_complementarity(this->original_model.inequality_constraints.size(), [&](size_t inequality_index) {
+      const size_t j = this->original_model.inequality_constraints[inequality_index];
+      if (0. < multipliers.constraints[j]) { // lower bound
+         return multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_lower_bound(j));
+      }
+      else if (multipliers.constraints[j] < 0.) { // upper bound
+         return multipliers.constraints[j] * (constraints[j] - this->original_model.get_constraint_upper_bound(j));
+      }
+      return 0.;
+   });
+   return norm(this->residual_norm, variable_complementarity, constraint_complementarity);
 }
 
-void FeasibilityRestorationFunnel::set_progress_measures_for_feasibility_problem(Iterate& iterate) {
-   // infeasibility measure: 0
-   iterate.progress.infeasibility = 0.;
-
-   // optimality measure: constraint violation
-   iterate.evaluate_constraints(this->original_model);
-   const double constraint_violation = this->l1_constraint_violation_coefficient *
-                                       this->original_model.compute_constraint_violation(iterate.evaluations.constraints, this->progress_norm);
-   iterate.progress.optimality = [=](double /*objective_multiplier*/) {
-      return constraint_violation;
-   };
-
-   // auxiliary measure
-   this->subproblem->set_auxiliary_measure(this->feasibility_problem, iterate);
-}
-
-ProgressMeasures FeasibilityRestorationFunnel::compute_predicted_reduction_models_for_optimality_problem(const Iterate& current_iterate,
-      const Direction& direction, double step_length) {
-   // predicted infeasibility reduction: "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-   const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
-         this->progress_norm);
-   const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
-         current_iterate, direction, step_length);
-   const double predicted_infeasibility_reduction = current_constraint_violation - linearized_constraint_violation;
-
-   // predicted optimality reduction: "-∇f(x)^T (αd)"
-   const double directional_derivative = dot(direction.primals, current_iterate.evaluations.objective_gradient);
-   const auto predicted_optimality_reduction = [=](double objective_multiplier) {
-      return step_length * (-objective_multiplier*directional_derivative);
-   };
-
-   // predicted auxiliary reduction
-   const double predicted_auxiliary_reduction = this->subproblem->generate_predicted_auxiliary_reduction_model(this->optimality_problem,
-         current_iterate, direction, step_length);
-
-   return {predicted_infeasibility_reduction, predicted_optimality_reduction, predicted_auxiliary_reduction};
-}
-
-ProgressMeasures FeasibilityRestorationFunnel::compute_predicted_reduction_models_for_feasibility_problem(const Iterate& current_iterate,
-      const Direction& direction, double step_length) {
-   // predicted infeasibility reduction: 0
-   const double predicted_infeasibility_reduction = 0.;
-
-   // predicted optimality reduction: "‖c(x)‖₁ - ‖c(x) + ∇c(x)^T (αd)‖₁"
-   const double current_constraint_violation = this->original_model.compute_constraint_violation(current_iterate.evaluations.constraints,
-         this->progress_norm);
-   const double linearized_constraint_violation = ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model,
-         current_iterate, direction, step_length);
-   const auto predicted_optimality_reduction = [=](double /*objective_multiplier*/) {
-      return this->l1_constraint_violation_coefficient * (current_constraint_violation - linearized_constraint_violation);
-   };
-
-   // predicted auxiliary reduction
-   const double predicted_auxiliary_reduction = this->subproblem->generate_predicted_auxiliary_reduction_model(this->feasibility_problem,
-         current_iterate, direction, step_length);
-
-   return {predicted_infeasibility_reduction, predicted_optimality_reduction, predicted_auxiliary_reduction};
+void FeasibilityRestorationFunnel::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {
+   if (this->current_phase == Phase::OPTIMALITY) {
+      statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
+      statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
+      if (this->original_model.is_constrained()) {
+         statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
+      }
+   }
+   else {
+      statistics.add_statistic("complementarity", trial_iterate.residuals.feasibility_complementarity);
+      statistics.add_statistic("stationarity", trial_iterate.residuals.feasibility_stationarity);
+      if (this->original_model.is_constrained()) {
+         statistics.add_statistic("primal infeas.", trial_iterate.progress.optimality(1.));
+      }
+   }
+   statistics.add_statistic("phase", static_cast<int>(this->current_phase));
 }
 
 size_t FeasibilityRestorationFunnel::get_hessian_evaluation_count() const {

@@ -54,8 +54,6 @@ bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, co
    DEBUG << "\t\tUnconstrained predicted reduction: " << predicted_reduction.optimality(1.) << " + " << predicted_reduction.auxiliary_terms <<
          " = " <<  unconstrained_predicted_reduction << '\n';
 
-   GlobalizationStrategy::check_finiteness(current_progress_measures, 1.);
-   GlobalizationStrategy::check_finiteness(trial_progress_measures, 1.);
    statistics.add_statistic("funnel width", this->get_funnel_width());
    
    //Output funnel parameter
