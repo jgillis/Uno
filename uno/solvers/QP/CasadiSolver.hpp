@@ -20,12 +20,14 @@ public:
 
    Direction solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point) override;
+         const RectangularMatrix<double>& constraint_jacobian, const std::vector<double>& initial_point,
+         const WarmstartInformation& warmstart_information) override;
 
    Direction solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
          const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
-         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point)
-         override;
+         const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
+         const WarmstartInformation& warmstart_information) override;
+
 };
 
 #endif // UNO_CASADISOLVER_H

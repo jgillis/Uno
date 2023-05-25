@@ -10,15 +10,30 @@
 #ifdef HAS_BQPD
 #include "BQPDSolver.hpp"
 #endif
+#ifdef WITH_CASADI
+#include "CasadiSolver.hpp"
+#endif
 
 class QPSolverFactory {
 public:
    // create a QP solver
    static std::unique_ptr<QPSolver> create(const std::string& QP_solver_name, size_t number_variables, size_t number_constraints,
          size_t maximum_number_nonzeros, bool quadratic_programming, const Options& options) {
+      std::cout << "QP solver name: " << QP_solver_name << std::endl;
+      #ifdef WITH_CASADI
+         std::cout << "casadi found" << std::endl;
+      #else
+         std::cout << "casadi not found" << std::endl;
+      #endif
+
 #ifdef HAS_BQPD
       if (QP_solver_name == "BQPD") {
          return std::make_unique<BQPDSolver>(number_variables, number_constraints, maximum_number_nonzeros, quadratic_programming, options);
+      }
+#endif
+#ifdef WITH_CASADI
+      if (QP_solver_name == "casadi") {
+         return std::make_unique<CASADISolver>(number_variables, number_constraints, maximum_number_nonzeros, quadratic_programming, options);
       }
 #endif
       throw std::invalid_argument("QP solver name is unknown");
@@ -30,6 +45,9 @@ public:
       #ifdef HAS_BQPD
       solvers.emplace_back("BQPD");
       #endif
+#ifdef WITH_CASADI
+      solvers.emplace_back("casadi");
+#endif
       return solvers;
    }
 };
