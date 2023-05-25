@@ -39,6 +39,8 @@ public:
    // [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress_measures,
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
+   
+   void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
    // void reset() override;
    // void register_current_progress(const ProgressMeasures& current_progress_measures) override;
 

@@ -113,9 +113,9 @@ void FeasibilityRestorationFunnel::compute_progress_measures(Iterate& current_it
       this->subproblem->subproblem_definition_changed = false;
    }
    // std::cout << "Current iterate in progress measure: " << current_iterate << std::endl;
-   // std::cout << "Test linearized feasibility: " << this->test_linearized_feasibility << std::endl;
+   std::cout << "Test linearized feasibility: " << this->test_linearized_feasibility << std::endl;
    // std::cout << "lin feas : " << ConstraintRelaxationStrategy::compute_linearized_constraint_violation(this->original_model, current_iterate, direction, step_length) << std::endl;
-   // std::cout << " tol: " << this->tolerance << std::endl;
+   std::cout << " tol: " << this->tolerance << std::endl;
 
    // possibly go from restoration phase to optimality phase
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && (not this->test_linearized_feasibility ||
@@ -125,9 +125,18 @@ void FeasibilityRestorationFunnel::compute_progress_measures(Iterate& current_it
       // trial_iterate.evaluate_constraints(this->original_model);
       // const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints,
       //       this->progress_norm);
-      std::cout << "Subproblem should be feasible with the given direction..." << std::endl;
 
+      // std::cout << "Current iterate infeasibility" << current_iterate.progress.optimality(1.) << std::endl;
+      // std::cout << "Trial iterate infeasibility" << trial_infeasibility << std::endl;
+      // std::cout << "Subproblem should be feasible with the given direction..." << std::endl;
+
+      // if (this->restoration_phase_strategy->current_iterate_acceptable_to_funnel &&
+      //    trial_infeasibility <= current_iterate.progress.optimality(1.)) {
+      //    std::cout << "Feasibility is improved after restoration" << std::endl;
+      //    this->switch_to_optimality(current_iterate, trial_iterate);
+      // }
       if (this->restoration_phase_strategy->current_iterate_acceptable_to_funnel) {
+         // std::cout << "Feasibility is improved after restoration" << std::endl;
          this->switch_to_optimality(current_iterate, trial_iterate);
       }
       // if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility) && this->restoration_phase_strategy->current_iterate_acceptable_to_funnel) {

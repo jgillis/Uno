@@ -10,6 +10,26 @@ FunnelRestorationStrategy::FunnelRestorationStrategy(Statistics& statistics, con
    {}
 
 
+void FunnelRestorationStrategy::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
+
+   // this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
+   //    trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
+
+   if (trial_infeasibility_measure <= this->funnel_width){
+      if (current_infeasibility_measure > this->funnel_width){
+         this->funnel_width = std::min(this->parameters.kappa_infeasibility_1 *this->funnel_width,
+         trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (funnel_width - trial_infeasibility_measure));
+      } else {
+         this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
+         trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
+      }
+   } //else: do not reduce the funnel
+
+   DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
+   
+}
+
+
 /* check acceptability of step(s) (funnel & sufficient reduction)
  * funnel methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step

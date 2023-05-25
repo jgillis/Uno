@@ -44,6 +44,7 @@ public:
    [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, const Iterate& trial_iterate, const ProgressMeasures& current_progress_measures,
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
+   void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
    
    void reset() override;
    void register_current_progress(const ProgressMeasures& current_progress_measures) override;
@@ -52,10 +53,7 @@ public:
    friend std::ostream& operator<<(std::ostream& stream, FunnelStrategy& funnel);
    double get_funnel_width();
 
-protected:
-
-   virtual void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
-   
+protected:   
    // pointer to allow polymorphism
    double initial_funnel_upper_bound{INF<double>};
    const FunnelStrategyParameters parameters; /*!< Set of constants */

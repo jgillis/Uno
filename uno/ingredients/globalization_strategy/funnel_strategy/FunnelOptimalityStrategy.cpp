@@ -13,6 +13,25 @@ FunnelOptimalityStrategy::FunnelOptimalityStrategy(Statistics& statistics, const
  * funnel methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
+
+void FunnelOptimalityStrategy::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
+
+   // this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
+   //    trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
+
+   if (trial_infeasibility_measure <= this->parameters.kappa_infeasibility_1*current_infeasibility_measure){
+      this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
+      trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
+   } else{
+      this->funnel_width = std::min(this->parameters.kappa_infeasibility_1 *this->funnel_width,
+      trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (funnel_width - trial_infeasibility_measure));
+   }
+
+   DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
+   
+}
+
+
 bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
@@ -77,7 +96,7 @@ bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, con
       DEBUG << "\t\tFunnel condition NOT acceptable\n";
    }
 
-   if (funnel_reduction_mechanism){
+   if (funnel_reduction_mechanism){ // steps needs to be accepted for this...
        DEBUG << "\t\tEntering funnel reduction mechanism\n";
 
       // // Feasibility measures

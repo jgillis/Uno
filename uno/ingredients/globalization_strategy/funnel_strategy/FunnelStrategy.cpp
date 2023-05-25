@@ -66,10 +66,10 @@ bool FunnelStrategy::switching_condition(double predicted_reduction, double curr
 
 void FunnelStrategy::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
 
-   this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
-      trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
+   // this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
+   //    trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
 
-   DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
+   // DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
    
 }
 
