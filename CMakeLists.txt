@@ -257,6 +257,7 @@ target_include_directories(uno PUBLIC ${DIRECTORIES})
 
 # link the libraries
 target_link_libraries(uno PUBLIC ${LIBRARIES})
+message("debug ${LIBRARIES}")
 
 if(WITH_CASADI AND CASADI_FOUND)
     target_link_libraries(uno PRIVATE casadi)
