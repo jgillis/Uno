@@ -92,7 +92,30 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["lba"] = DM(lba);
    args["uba"] = DM(uba);
 
-   solver(args);
+   DMDict res = solver(args);
+
+   Direction direction(number_variables, number_constraints);
+   copy_from(direction.primals, res["x"].nonzeros());
+
+   // project solution into bounds
+   for (size_t i: Range(number_variables)) {
+      direction.primals[i] = std::min(std::max(direction.primals[i], variables_bounds[i].lb), variables_bounds[i].ub);
+   }
+
+   direction.subproblem_objective = res["cost"].nonzeros().front();
+
+   // TODO: check signs (validate with BQPSolver answer)
+   //       do we need to construct activate set? see BQPDSolver::analyze_constraints
+
+   uout() << "direction.multipliers.lower_bounds" << direction.multipliers.lower_bounds.size() << std::endl;
+   uout() << "direction.multipliers.constraints" << direction.multipliers.constraints.size() << std::endl;
+
+   copy_from(direction.multipliers.lower_bounds, res["lam_x"].nonzeros());
+   copy_from(direction.multipliers.upper_bounds, res["lam_x"].nonzeros());
+
+   copy_from(direction.multipliers.constraints, res["lam_a"].nonzeros());
+
+   return direction;
 
    // Populate Direction
 
