@@ -33,7 +33,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    std::vector<casadi_int> row, col;
    std::vector<double> values;
 
-   if (number_constraints != 0){
+   // if (number_constraints != 0){
 
       casadi_int i=0; //row
       for (const auto& cj_row : constraint_jacobian) {
@@ -44,8 +44,8 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
          });
          i++;
       }
-      DM A = DM::triplet(row, col, values, number_constraints, number_variables);
-   }
+   // }
+   DM A = DM::triplet(row, col, values, number_constraints, number_variables);
 
    row.clear();
    col.clear();
@@ -58,11 +58,11 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    });
    DM H = DM::triplet(row, col, values, number_variables, number_variables);
 
-   if (number_constraints != 0){
+   // if (number_constraints != 0){
       SparsityDict qp_struct = {{"a", A.sparsity()}, {"h", H.sparsity()}};
-   } else {
-      SparsityDict qp_struct = {{"h", H.sparsity()}};
-   }
+   // } else {
+   //    SparsityDict qp_struct = {{"h", H.sparsity()}};
+   // }
    Dict opts_osqp;
    opts_osqp["verbose"] = false;
    Dict opts_conic;
@@ -76,9 +76,9 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    DMDict args;
    args["x0"] = DM(std::vector<double>(initial_point.begin(), initial_point.begin()+number_variables));
    std::cout << "test" << args << std::endl;
-   if (number_constraints != 0){
+   // if (number_constraints != 0){
    args["a"] = A;
-   }
+   // }
    args["h"] = H;
    std::vector<double> g(number_variables);
    linear_objective.for_each([&](size_t i, double entry) {
@@ -98,7 +98,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    }
    args["lbx"] = DM(lbx);
    args["ubx"] = DM(ubx);
-   if (number_constraints != 0){
+   // if (number_constraints != 0){
       std::vector<double> lba(number_constraints);
       std::vector<double> uba(number_constraints);
       casadi_assert_dev(constraint_bounds.size()==number_constraints);
@@ -111,7 +111,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
       }
       args["lba"] = DM(lba);
       args["uba"] = DM(uba);
-   }
+   // }
 
    std::cout << "test" << args << std::endl;
    DMDict res = solver(args);
