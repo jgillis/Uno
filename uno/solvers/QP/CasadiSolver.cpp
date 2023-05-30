@@ -56,8 +56,13 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    DM H = DM::triplet(row, col, values, number_variables, number_variables);
 
    SparsityDict qp_struct = {{"a", A.sparsity()}, {"h", H.sparsity()}};
+   Dict opts_osqp;
+   opts_osqp['verbose'] = false;
+   Dict opts_conic;
+   opts_conic['osqp'] = opts_osqp;
+
    // Function solver = conic("solver", "qrqp", qp_struct,{{"print_problem", false, "print_iterations", false}});
-   Function solver = conic("solver", "osqp", qp_struct,{{"osqp", {{"verbose", false}}}});
+   Function solver = conic("solver", "osqp", qp_struct, opts_conic);
 
    DMDict args;
    args["x0"] = DM(std::vector<double>(initial_point.begin(), initial_point.begin()+number_variables));
