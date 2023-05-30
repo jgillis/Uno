@@ -60,6 +60,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    opts_osqp["verbose"] = false;
    Dict opts_conic;
    opts_conic["osqp"] = opts_osqp;
+   opts_conic["verbose"] = true;
 
    // Function solver = conic("solver", "qrqp", qp_struct,{{"print_problem", false, "print_iterations", false}});
    Function solver = conic("solver", "osqp", qp_struct, opts_conic);
@@ -102,6 +103,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    std::cout << "test" << args << std::endl;
    DMDict res = solver(args);
+   std::cout << "Return status of solver: " << solver.
 
    Direction direction(number_variables, number_constraints);
    copy_from(direction.primals, res["x"].nonzeros());
