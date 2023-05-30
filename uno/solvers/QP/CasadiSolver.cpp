@@ -103,7 +103,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    std::cout << "test" << args << std::endl;
    DMDict res = solver(args);
-   std::cout << "Return status of solver: " << solver.
 
    Direction direction(number_variables, number_constraints);
    copy_from(direction.primals, res["x"].nonzeros());
