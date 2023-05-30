@@ -61,6 +61,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    Dict opts_conic;
    opts_conic["osqp"] = opts_osqp;
    opts_conic["verbose"] = true;
+   opts_conic["print_problem"] = true;
 
    // Function solver = conic("solver", "qrqp", qp_struct,{{"print_problem", false, "print_iterations", false}});
    Function solver = conic("solver", "osqp", qp_struct, opts_conic);
