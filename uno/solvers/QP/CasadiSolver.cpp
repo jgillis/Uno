@@ -94,7 +94,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // opts_osqp["eps_rel"] = 1e-8;
    opts_osqp["printLevel"] = "none";
    Dict opts_conic;
-   opts_conic["osqp"] = opts_osqp;
+   opts_conic["qpoases"] = opts_osqp;
    opts_conic["verbose"] = true;
    opts_conic["print_problem"] = false;
    opts_conic["error_on_fail"] = false;
@@ -104,7 +104,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["a"] = A;
    args["h"] = H;
 
-   Function solver = conic("solver", "osqp", qp_struct, opts_conic);
+   Function solver = conic("solver", "qpoases", qp_struct, opts_conic);
 
 
    std::vector<double> g(number_variables);
