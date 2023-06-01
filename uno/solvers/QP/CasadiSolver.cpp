@@ -86,13 +86,16 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    opts_conic["verbose"] = true;
    opts_conic["print_problem"] = false;
    opts_conic["error_on_fail"] = false;
-
-   Function solver = conic("solver", "osqp", qp_struct, opts_conic);
-
+   
    DMDict args;
    args["x0"] = DM(std::vector<double>(initial_point.begin(), initial_point.begin()+number_variables));
    args["a"] = A;
    args["h"] = H;
+
+   std::cout << "test" << args << std::endl;
+
+   Function solver = conic("solver", "osqp", qp_struct, opts_conic);
+
 
    std::vector<double> g(number_variables);
    linear_objective.for_each([&](size_t i, double entry) {
@@ -114,7 +117,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["ubx"] = DM(ubx);
    DEBUG << "TEST!!"; 
     
-   std::cout << "test" << args << std::endl;
    std::vector<double> lba(number_constraints);
    std::vector<double> uba(number_constraints);
    casadi_assert_dev(constraint_bounds.size()==number_constraints);
