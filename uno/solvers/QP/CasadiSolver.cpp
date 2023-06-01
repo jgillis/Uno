@@ -28,7 +28,25 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
       const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
       const WarmstartInformation& warmstart_information) {
 
-   std::cout << "constraint_jacobian: " << std::endl;
+   // Taken from BQPD
+   if (this->print_subproblem) {
+      DEBUG << "QP:\n";
+      DEBUG << "Hessian: " << hessian;
+   }
+
+   // Taken from BQPD
+   if (this->print_subproblem) {
+      DEBUG << "objective gradient: " << linear_objective;
+      for (size_t j: Range(number_constraints)) {
+         DEBUG << "gradient c" << j << ": " << constraint_jacobian[j];
+      }
+      for (size_t i: Range(number_variables)) {
+         DEBUG << "d_x" << i << " in [" << variables_bounds[i].lb << ", " << variables_bounds[i].ub << "]\n";
+      }
+      for (size_t j: Range(number_constraints)) {
+         DEBUG << "linearized c" << j << " in [" << constraint_bounds[j].lb << ", " << constraint_bounds[j].ub << "]\n";
+      }
+   }
 
    std::vector<casadi_int> row, col;
    std::vector<double> values;
@@ -58,36 +76,31 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    });
    DM H = DM::triplet(row, col, values, number_variables, number_variables);
 
-   // if (number_constraints != 0){
-      SparsityDict qp_struct = {{"a", A.sparsity()}, {"h", H.sparsity()}};
-   // } else {
-   //    SparsityDict qp_struct = {{"h", H.sparsity()}};
-   // }
+   SparsityDict qp_struct = {{"a", A.sparsity()}, {"h", H.sparsity()}};
+
    Dict opts_osqp;
    opts_osqp["verbose"] = false;
    Dict opts_conic;
    opts_conic["osqp"] = opts_osqp;
    opts_conic["verbose"] = true;
    opts_conic["print_problem"] = true;
+   opts_conic["error_on_fail"] = false;
 
-   // Function solver = conic("solver", "qrqp", qp_struct,{{"print_problem", false, "print_iterations", false}});
    Function solver = conic("solver", "osqp", qp_struct, opts_conic);
 
    DMDict args;
    args["x0"] = DM(std::vector<double>(initial_point.begin(), initial_point.begin()+number_variables));
-   std::cout << "test" << args << std::endl;
-   // if (number_constraints != 0){
    args["a"] = A;
-   // }
    args["h"] = H;
+
    std::vector<double> g(number_variables);
    linear_objective.for_each([&](size_t i, double entry) {
       g[i] = entry;
    });
    args["g"] = DM(g);
+   
    std::vector<double> lbx(number_variables);
    std::vector<double> ubx(number_variables);
-
    i = 0;
    for (const auto & interval: variables_bounds) {
       lbx[i] = interval.lb;
@@ -98,32 +111,34 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    }
    args["lbx"] = DM(lbx);
    args["ubx"] = DM(ubx);
-   // if (number_constraints != 0){
-      std::vector<double> lba(number_constraints);
-      std::vector<double> uba(number_constraints);
-      casadi_assert_dev(constraint_bounds.size()==number_constraints);
-      i = 0;
-      for (const auto & interval: constraint_bounds) {
-         std::cout << "i" << i << number_constraints << std::endl;
-         lba[i] = interval.lb;
-         uba[i] = interval.ub;
-         i++;
-      }
-      args["lba"] = DM(lba);
-      args["uba"] = DM(uba);
-   // }
 
-   std::cout << "test" << args << std::endl;
+   std::vector<double> lba(number_constraints);
+   std::vector<double> uba(number_constraints);
+   casadi_assert_dev(constraint_bounds.size()==number_constraints);
+   i = 0;
+   for (const auto & interval: constraint_bounds) {
+      std::cout << "i" << i << number_constraints << std::endl;
+      lba[i] = interval.lb;
+      uba[i] = interval.ub;
+      i++;
+   }
+   args["lba"] = DM(lba);
+   args["uba"] = DM(uba);
+
+   // Couldn't we set res['x'] = getptr(direction)??
    DMDict res = solver(args);
 
    Direction direction(number_variables, number_constraints);
    copy_from(direction.primals, res["x"].nonzeros());
+   //direction.status = ..... tbd
+   this->number_calls++;
 
    // project solution into bounds
    for (size_t i: Range(number_variables)) {
       direction.primals[i] = std::min(std::max(direction.primals[i], variables_bounds[i].lb), variables_bounds[i].ub);
    }
-
+   
+   // Analyze the constraints here ..................
    direction.subproblem_objective = res["cost"].nonzeros().front();
 
    // TODO: check signs (validate with BQPSolver answer)
@@ -137,9 +152,9 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    copy_from(direction.multipliers.constraints, res["lam_a"].nonzeros());
 
-   return direction;
+   // Analysis not over yet ......
 
-   // Populate Direction
+   return direction;
 
 }
 
