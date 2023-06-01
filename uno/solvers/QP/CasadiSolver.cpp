@@ -154,11 +154,18 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    copy_from(direction.multipliers.constraints, res["lam_a"].nonzeros());
 
    // Analysis not over yet ......
-   std::cout << "direction multipliers ub: " << direction.multipliers.upper_bounds << std::endl;
-   std::cout << "direction multipliers lb: " << direction.multipliers.lower_bounds << std::endl;
-   std::cout << "direction constraints multipliers: " << direction.multipliers.constraints << std::endl;
-
-
+   DEBUG << "direction multipliers ub: " << std::endl;
+   for (size_t i: Range(number_variables)) {
+         DEBUG <<  direction.multipliers.upper_bounds[i] << "\n";
+      }
+   DEBUG << "direction multipliers ub: " << std::endl;
+   for (size_t i: Range(number_variables)) {
+         DEBUG << direction.multipliers.lower_bounds[i] << "\n";
+      }
+   DEBUG << "direction constraints multipliers: " << std::endl;
+   for (size_t j: Range(number_constraints)) {
+         DEBUG << direction.multipliers.constraints[j]<< "\n";
+      }
    return direction;
 
 }
