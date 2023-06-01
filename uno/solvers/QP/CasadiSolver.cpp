@@ -101,8 +101,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["a"] = A;
    args["h"] = H;
 
-   std::cout << "test" << args << std::endl;
-
    Function solver = conic("solver", "osqp", qp_struct, opts_conic);
 
 
@@ -124,7 +122,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    }
    args["lbx"] = DM(lbx);
    args["ubx"] = DM(ubx);
-   DEBUG << "TEST!!"; 
     
    std::vector<double> lba(number_constraints);
    std::vector<double> uba(number_constraints);
@@ -139,7 +136,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["lba"] = DM(lba);
    args["uba"] = DM(uba);
 
-   uout() << "test" << args;
    // Couldn't we set res['x'] = getptr(direction)??
    DMDict res = solver(args);
 
