@@ -84,7 +84,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    Dict opts_conic;
    opts_conic["osqp"] = opts_osqp;
    opts_conic["verbose"] = true;
-   opts_conic["print_problem"] = true;
+   opts_conic["print_problem"] = false;
    opts_conic["error_on_fail"] = false;
 
    Function solver = conic("solver", "osqp", qp_struct, opts_conic);
@@ -106,7 +106,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    for (const auto & interval: variables_bounds) {
       lbx[i] = interval.lb;
       ubx[i] = interval.ub;
-      uout() << interval.lb << ":" << interval.ub << std::endl;
+      // uout() << interval.lb << ":" << interval.ub << std::endl;
       i++;
       if (i==number_variables) break;
    }
@@ -118,7 +118,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    casadi_assert_dev(constraint_bounds.size()==number_constraints);
    i = 0;
    for (const auto & interval: constraint_bounds) {
-      std::cout << "i" << i << number_constraints << std::endl;
+      // std::cout << "i" << i << number_constraints << std::endl;
       lba[i] = interval.lb;
       uba[i] = interval.ub;
       i++;
@@ -145,8 +145,8 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // TODO: check signs (validate with BQPSolver answer)
    //       do we need to construct activate set? see BQPDSolver::analyze_constraints
 
-   uout() << "direction.multipliers.lower_bounds" << direction.multipliers.lower_bounds.size() << std::endl;
-   uout() << "direction.multipliers.constraints" << direction.multipliers.constraints.size() << std::endl;
+   // uout() << "direction.multipliers.lower_bounds" << direction.multipliers.lower_bounds.size() << std::endl;
+   // uout() << "direction.multipliers.constraints" << direction.multipliers.constraints.size() << std::endl;
 
    copy_from(direction.multipliers.lower_bounds, res["lam_x"].nonzeros());
    copy_from(direction.multipliers.upper_bounds, res["lam_x"].nonzeros());
