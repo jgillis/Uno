@@ -148,8 +148,21 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // uout() << "direction.multipliers.lower_bounds" << direction.multipliers.lower_bounds.size() << std::endl;
    // uout() << "direction.multipliers.constraints" << direction.multipliers.constraints.size() << std::endl;
 
-   copy_from(direction.multipliers.lower_bounds, res["lam_x"].nonzeros());
-   copy_from(direction.multipliers.upper_bounds, res["lam_x"].nonzeros());
+   // Take care of lower and upper bound multipliers:
+   // copy_from(direction.multipliers.lower_bounds, res["lam_x"].nonzeros());
+   // copy_from(direction.multipliers.upper_bounds, res["lam_x"].nonzeros());
+   for (size_t i: Range(number_variables)) {
+         if (res["lam_x"][i] < 0){
+            direction.multipliers.lower_bounds[i] = -res["lam_x"][i];
+            direction.multipliers.upper_bounds[i] = 0.0;
+         } else if (res["lam_x"][i] > 0) {
+            direction.multipliers.lower_bounds[i] = 0.0;
+            direction.multipliers.upper_bounds[i] = res["lam_x"][i];
+         } else {
+            direction.multipliers.lower_bounds[i] = 0.0;
+            direction.multipliers.upper_bounds[i] = 0.0;
+         }
+   }
 
    copy_from(direction.multipliers.constraints, res["lam_a"].nonzeros());
 
@@ -158,7 +171,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    for (size_t i: Range(number_variables)) {
          DEBUG <<  direction.multipliers.upper_bounds[i] << "\n";
       }
-   DEBUG << "direction multipliers ub: \n";
+   DEBUG << "direction multipliers lb: \n";
    for (size_t i: Range(number_variables)) {
          DEBUG << direction.multipliers.lower_bounds[i] << "\n";
       }

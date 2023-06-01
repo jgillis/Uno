@@ -147,7 +147,7 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    for (size_t i: Range(number_variables)) {
          DEBUG <<  direction.multipliers.upper_bounds[i] << "\n";
       }
-   DEBUG << "direction multipliers ub: \n";
+   DEBUG << "direction multipliers lb: \n";
    for (size_t i: Range(number_variables)) {
          DEBUG << direction.multipliers.lower_bounds[i] << "\n";
       }
