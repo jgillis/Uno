@@ -92,9 +92,9 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // opts_osqp["verbose"] = false;
    // opts_osqp["eps_abs"] = 1e-8;
    // opts_osqp["eps_rel"] = 1e-8;
-   opts_osqp["printLevel"] = "none";
+   // opts_osqp["printLevel"] = "none";
    Dict opts_conic;
-   opts_conic["qpoases"] = opts_osqp;
+   opts_conic["printLevel"] = "none";
    opts_conic["verbose"] = true;
    opts_conic["print_problem"] = false;
    opts_conic["error_on_fail"] = false;
