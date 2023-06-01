@@ -126,6 +126,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["lba"] = DM(lba);
    args["uba"] = DM(uba);
 
+   std::cout << "test" << args << std::endl;
    // Couldn't we set res['x'] = getptr(direction)??
    DMDict res = solver(args);
 
@@ -145,12 +146,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // TODO: check signs (validate with BQPSolver answer)
    //       do we need to construct activate set? see BQPDSolver::analyze_constraints
 
-   // uout() << "direction.multipliers.lower_bounds" << direction.multipliers.lower_bounds.size() << std::endl;
-   // uout() << "direction.multipliers.constraints" << direction.multipliers.constraints.size() << std::endl;
-
-   // Take care of lower and upper bound multipliers: Sign convention is opposite to Casadi
-   // copy_from(direction.multipliers.lower_bounds, res["lam_x"].nonzeros());
-   // copy_from(direction.multipliers.upper_bounds, res["lam_x"].nonzeros());
    for (size_t i: Range(number_variables)) {
          if (res["lam_x"].nonzeros()[i] < 0){
             direction.multipliers.lower_bounds[i] = -res["lam_x"].nonzeros()[i];
@@ -165,7 +160,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    }
 
    // Sign convention of Casadi and Uno is apparently different
-   // copy_from(direction.multipliers.constraints, res["lam_a"].nonzeros());
    for (size_t j: Range(number_constraints)) {
          if (res["lam_a"].nonzeros()[j] != 0){
             direction.multipliers.constraints[j] = -res["lam_a"].nonzeros()[j];
