@@ -164,7 +164,13 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
          }
    }
 
-   copy_from(direction.multipliers.constraints, res["lam_a"].nonzeros());
+   // Sign convention of Casadi and Uno is apparently different
+   // copy_from(direction.multipliers.constraints, res["lam_a"].nonzeros());
+   for (size_t j: Range(number_constraints)) {
+         if (res["lam_a"].nonzeros()[j] != 0){
+            direction.multipliers.constraints[j] = -res["lam_a"].nonzeros()[j];
+         }
+      }
 
    // Analysis not over yet ......
    DEBUG << "direction multipliers ub: \n";
