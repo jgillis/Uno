@@ -28,6 +28,10 @@ public:
          const RectangularMatrix<double>& constraint_jacobian, const SymmetricMatrix<double>& hessian, const std::vector<double>& initial_point,
          const WarmstartInformation& warmstart_information) override;
 
+private:
+      size_t number_calls{0};
+      const bool print_subproblem;
+
 };
 
 #endif // UNO_CASADISOLVER_H

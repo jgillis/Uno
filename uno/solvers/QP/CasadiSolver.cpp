@@ -20,7 +20,8 @@ CASADISolver::CASADISolver(size_t max_number_variables,
          size_t number_hessian_nonzeros,
          bool quadratic_programming,
          const Options& options):
-      QPSolver() {
+      QPSolver(),
+      print_subproblem(options.get_bool("BQPD_print_subproblem")) {
 }
 
 Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
