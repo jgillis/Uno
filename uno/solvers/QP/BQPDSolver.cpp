@@ -143,15 +143,15 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
    }
    this->analyze_constraints(number_variables, number_constraints, direction);
    
-   DEBUG << "direction multipliers ub: " << std::endl;
+   DEBUG << "direction multipliers ub: \n";
    for (size_t i: Range(number_variables)) {
          DEBUG <<  direction.multipliers.upper_bounds[i] << "\n";
       }
-   DEBUG << "direction multipliers ub: " << std::endl;
+   DEBUG << "direction multipliers ub: \n";
    for (size_t i: Range(number_variables)) {
          DEBUG << direction.multipliers.lower_bounds[i] << "\n";
       }
-   DEBUG << "direction constraints multipliers: " << std::endl;
+   DEBUG << "direction constraints multipliers: \n";
    for (size_t j: Range(number_constraints)) {
          DEBUG << direction.multipliers.constraints[j]<< "\n";
       }
