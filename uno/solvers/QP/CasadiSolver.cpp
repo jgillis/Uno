@@ -112,7 +112,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    }
    args["lbx"] = DM(lbx);
    args["ubx"] = DM(ubx);
-   std::cout << "TEST!!" << std::endl; 
+   DEBUG << "TEST!!"; 
     
    std::cout << "test" << args << std::endl;
    std::vector<double> lba(number_constraints);
