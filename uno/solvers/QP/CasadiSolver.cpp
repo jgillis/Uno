@@ -148,7 +148,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // uout() << "direction.multipliers.lower_bounds" << direction.multipliers.lower_bounds.size() << std::endl;
    // uout() << "direction.multipliers.constraints" << direction.multipliers.constraints.size() << std::endl;
 
-   // Take care of lower and upper bound multipliers:
+   // Take care of lower and upper bound multipliers: Sign convention is opposite to Casadi
    // copy_from(direction.multipliers.lower_bounds, res["lam_x"].nonzeros());
    // copy_from(direction.multipliers.upper_bounds, res["lam_x"].nonzeros());
    for (size_t i: Range(number_variables)) {
@@ -157,7 +157,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
             direction.multipliers.upper_bounds[i] = 0.0;
          } else if (res["lam_x"].nonzeros()[i] > 0) {
             direction.multipliers.lower_bounds[i] = 0.0;
-            direction.multipliers.upper_bounds[i] = res["lam_x"].nonzeros()[i];
+            direction.multipliers.upper_bounds[i] = -res["lam_x"].nonzeros()[i];
          } else {
             direction.multipliers.lower_bounds[i] = 0.0;
             direction.multipliers.upper_bounds[i] = 0.0;
