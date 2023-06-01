@@ -114,7 +114,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["ubx"] = DM(ubx);
    std::cout << "TEST!!" << std::endl; 
     
-   DEBUG << "test" << args << std::endl;
+   std::cout << "test" << args << std::endl;
    std::vector<double> lba(number_constraints);
    std::vector<double> uba(number_constraints);
    casadi_assert_dev(constraint_bounds.size()==number_constraints);
