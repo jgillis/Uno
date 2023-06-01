@@ -126,7 +126,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["lba"] = DM(lba);
    args["uba"] = DM(uba);
 
-   std::cout << "test" << args << std::endl;
+   uout() << "test" << args;
    // Couldn't we set res['x'] = getptr(direction)??
    DMDict res = solver(args);
 
