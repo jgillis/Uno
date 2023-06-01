@@ -142,6 +142,11 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
       direction.primals[i] = std::min(std::max(direction.primals[i], variables_bounds[i].lb), variables_bounds[i].ub);
    }
    this->analyze_constraints(number_variables, number_constraints, direction);
+   
+   std::cout << "direction multipliers ub: " << direction.multipliers.upper_bounds << std::endl;
+   std::cout << "direction multipliers lb: " << direction.multipliers.lower_bounds << std::endl;
+   std::cout << "direction constraints multipliers: " << direction.multipliers.constraints << std::endl;
+
    return direction;
 }
 
