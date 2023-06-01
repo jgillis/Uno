@@ -70,10 +70,19 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    col.clear();
    values.clear();
 
+   // It is a symmetric matrix, but Uno just saves the upper triangular part
    hessian.for_each([&](size_t i, size_t j,double entry) {
       row.push_back(i);
       col.push_back(j);
       values.push_back(entry);
+
+      if (i != j){
+         // Lower diagonal part also needed
+         row.push_back(j);
+         col.push_back(i);
+         values.push_back(entry);
+      }
+
    });
    DM H = DM::triplet(row, col, values, number_variables, number_variables);
 
