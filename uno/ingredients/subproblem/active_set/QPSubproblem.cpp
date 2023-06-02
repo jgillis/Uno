@@ -54,6 +54,21 @@ Direction QPSubproblem::solve(Statistics& statistics, const NonlinearProblem& pr
    Direction direction = this->solver->solve_QP(problem.number_variables, problem.number_constraints, this->direction_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
          *this->hessian_model->hessian, this->initial_point, warmstart_information);
+
+   // Analysis not over yet ......
+   DEBUG << "OUTSIDE: direction multipliers ub: \n";
+   for (size_t i: Range(problem.number_variables)) {
+         DEBUG <<  direction.multipliers.upper_bounds[i] << "\n";
+      }
+   DEBUG << "OUTSIDE: direction multipliers lb: \n";
+   for (size_t i: Range(problem.number_variables)) {
+         DEBUG << direction.multipliers.lower_bounds[i] << "\n";
+      }
+   DEBUG << "OUTSIDE: direction constraints multipliers: \n";
+   for (size_t j: Range(problem.number_constraints)) {
+         DEBUG << direction.multipliers.constraints[j]<< "\n";
+      }
+
    ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point
