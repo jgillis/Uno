@@ -104,6 +104,11 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["a"] = A;
    args["h"] = H;
 
+   DEBUG << "direction initial point: \n";
+   for (size_t i: Range(number_variables)) {
+         DEBUG <<  initial_point[i] << "\n";
+      }
+
    Function solver = conic("solver", "qpoases", qp_struct, opts_conic);
 
 

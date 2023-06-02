@@ -127,6 +127,10 @@ Direction BQPDSolver::solve_subproblem(size_t number_variables, size_t number_co
 
    BQPDMode mode = this->determine_mode(warmstart_information);
    const int mode_integer = static_cast<int>(mode);
+   DEBUG << "direction initial point: \n";
+   for (size_t i: Range(number_variables)) {
+         DEBUG <<  initial_point[i] << "\n";
+      }
 
    // solve the LP/QP
    bqpd_(&n, &m, &this->k, &this->kmax, this->jacobian.data(), this->jacobian_sparsity.data(), direction.primals.data(), this->lb.data(),
