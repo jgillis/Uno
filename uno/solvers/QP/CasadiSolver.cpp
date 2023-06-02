@@ -49,21 +49,22 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
       }
    }
 
+   // ---------------------------------------------------
+   // Prepare argument dictionary for Casadi solver
+   // ---------------------------------------------------
+
    std::vector<casadi_int> row, col;
    std::vector<double> values;
 
-   // if (number_constraints != 0){
-
-      casadi_int i=0; //row
-      for (const auto& cj_row : constraint_jacobian) {
-         cj_row.for_each([&](size_t c, double val) {
-            row.push_back(i);
-            col.push_back(c);
-            values.push_back(val);
-         });
-         i++;
-      }
-   // }
+   casadi_int i=0; //row
+   for (const auto& cj_row : constraint_jacobian) {
+      cj_row.for_each([&](size_t c, double val) {
+         row.push_back(i);
+         col.push_back(c);
+         values.push_back(val);
+      });
+      i++;
+   }
    DM A = DM::triplet(row, col, values, number_constraints, number_variables);
 
    row.clear();
@@ -82,22 +83,8 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
          col.push_back(i);
          values.push_back(entry);
       }
-
    });
    DM H = DM::triplet(row, col, values, number_variables, number_variables);
-
-   SparsityDict qp_struct = {{"a", A.sparsity()}, {"h", H.sparsity()}};
-
-   Dict opts_osqp;
-   // opts_osqp["verbose"] = false;
-   // opts_osqp["eps_abs"] = 1e-8;
-   // opts_osqp["eps_rel"] = 1e-8;
-   // opts_osqp["printLevel"] = "none";
-   Dict opts_conic;
-   opts_conic["printLevel"] = "none";
-   opts_conic["verbose"] = true;
-   opts_conic["print_problem"] = false;
-   opts_conic["error_on_fail"] = false;
    
    DMDict args;
    args["x0"] = DM(std::vector<double>(initial_point.begin(), initial_point.begin()+number_variables));
@@ -108,9 +95,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    for (size_t i: Range(number_variables)) {
          DEBUG <<  initial_point[i] << "\n";
       }
-
-   Function solver = conic("solver", "qpoases", qp_struct, opts_conic);
-
 
    std::vector<double> g(number_variables);
    linear_objective.for_each([&](size_t i, double entry) {
@@ -144,9 +128,33 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["lba"] = DM(lba);
    args["uba"] = DM(uba);
 
-   // Couldn't we set res['x'] = getptr(direction)??
+   // ---------------------------------------------------
+   // Create the Casadi QP solver and solve the problem
+   // ---------------------------------------------------
+
+   SparsityDict qp_struct = {{"a", A.sparsity()}, {"h", H.sparsity()}};
+
+   Dict opts_osqp;
+   // opts_osqp["verbose"] = false;
+   // opts_osqp["eps_abs"] = 1e-8;
+   // opts_osqp["eps_rel"] = 1e-8;
+   // opts_osqp["printLevel"] = "none";
+   Dict opts_conic;
+   opts_conic["printLevel"] = "none";
+   opts_conic["verbose"] = true;
+   opts_conic["print_problem"] = false;
+   opts_conic["error_on_fail"] = false;
+   Function solver = conic("solver", "qpoases", qp_struct, opts_conic);
+
    DMDict res = solver(args);
 
+
+   // ---------------------------------------------------
+   // Postprocess the direction
+   // ---------------------------------------------------
+
+   // Primal variables
+   // ----------------
    Direction direction(number_variables, number_constraints);
    copy_from(direction.primals, res["x"].nonzeros());
    //direction.status = ..... tbd
@@ -157,8 +165,11 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
       direction.primals[i] = std::min(std::max(direction.primals[i], variables_bounds[i].lb), variables_bounds[i].ub);
    }
    
+   // Dual variables
+   // ----------------
    // Analyze the constraints here ..................
    direction.subproblem_objective = res["cost"].nonzeros().front();
+   ConstraintPartition constraint_partition(number_constraints);
 
    // TODO: check signs (validate with BQPSolver answer)
    //       do we need to construct activate set? see BQPDSolver::analyze_constraints
@@ -183,6 +194,8 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    // Sign convention of Casadi and Uno is apparently different
    for (size_t j: Range(number_constraints)) {
+         // so far, we just deal with feasible subproblems, so:
+         constraint_partition.feasible.push_back(constraint_index);
          if (res["lam_a"].nonzeros()[j] != 0){
             direction.multipliers.constraints[j] = -res["lam_a"].nonzeros()[j];
 
