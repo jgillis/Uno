@@ -207,6 +207,8 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
          }
       }
 
+   direction.constraint_partition = constraint_partition;
+
    // Analysis not over yet ......
    DEBUG << "direction multipliers ub: \n";
    for (size_t i: Range(number_variables)) {
