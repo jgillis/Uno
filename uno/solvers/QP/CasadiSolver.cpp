@@ -195,7 +195,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // Sign convention of Casadi and Uno is apparently different
    for (size_t j: Range(number_constraints)) {
          // so far, we just deal with feasible subproblems, so:
-         constraint_partition.feasible.push_back(constraint_index);
+         constraint_partition.feasible.push_back(j);
          if (res["lam_a"].nonzeros()[j] != 0){
             direction.multipliers.constraints[j] = -res["lam_a"].nonzeros()[j];
 
