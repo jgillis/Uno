@@ -29,10 +29,12 @@ public:
          const WarmstartInformation& warmstart_information) override;
 
 private:
-      const int fortran_shift{1};
+   const int fortran_shift{1};
+   size_t number_calls{0};
+   const bool print_subproblem;
 
-      size_t number_calls{0};
-      const bool print_subproblem;
+   void analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction);
+
 
 };
 
