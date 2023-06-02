@@ -137,16 +137,18 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    SparsityDict qp_struct = {{"a", A.sparsity()}, {"h", H.sparsity()}};
 
    Dict opts_osqp;
-   // opts_osqp["verbose"] = false;
-   // opts_osqp["eps_abs"] = 1e-8;
-   // opts_osqp["eps_rel"] = 1e-8;
-   // opts_osqp["printLevel"] = "none";
+   opts_osqp["verbose"] = false;
+   opts_osqp["eps_abs"] = 1e-8;
+   opts_osqp["eps_rel"] = 1e-8;
    Dict opts_conic;
-   opts_conic["printLevel"] = "none";
+
+   opts_conic["osqp"] = opts_osqp;
+
+   // opts_conic["printLevel"] = "none";
    opts_conic["verbose"] = true;
    opts_conic["print_problem"] = false;
    opts_conic["error_on_fail"] = false;
-   Function solver = conic("solver", "qpoases", qp_struct, opts_conic);
+   Function solver = conic("solver", "osqp", qp_struct, opts_conic);
 
    DMDict res = solver(args);
 
