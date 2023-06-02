@@ -31,8 +31,6 @@ public:
 private:
    size_t number_calls{0};
    const bool print_subproblem;
-
-
 };
 
 #endif // UNO_CASADISOLVER_H

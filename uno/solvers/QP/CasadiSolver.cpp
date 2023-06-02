@@ -22,10 +22,6 @@ CASADISolver::CASADISolver(size_t max_number_variables,
          const Options& options):
       QPSolver(),
       print_subproblem(options.get_bool("BQPD_print_subproblem")) {
-   // default active set
-   for (size_t i: Range(max_number_variables + number_constraints)) {
-      this->active_set[i] = static_cast<int>(i) + this->fortran_shift;
-   }
 }
 
 Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
@@ -168,7 +164,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
             direction.multipliers.lower_bounds[i] = -res["lam_x"].nonzeros()[i];
             direction.multipliers.upper_bounds[i] = 0.0;
 
-            direction.active_set.bounds.at_lower_bound.push_back(index);
+            direction.active_set.bounds.at_lower_bound.push_back(i);
          } else if (res["lam_x"].nonzeros()[i] > 0) { // upper bound active
             direction.multipliers.lower_bounds[i] = 0.0;
             direction.multipliers.upper_bounds[i] = -res["lam_x"].nonzeros()[i];
