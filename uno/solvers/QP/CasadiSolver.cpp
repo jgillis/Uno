@@ -22,6 +22,10 @@ CASADISolver::CASADISolver(size_t max_number_variables,
          const Options& options):
       QPSolver(),
       print_subproblem(options.get_bool("BQPD_print_subproblem")) {
+   // default active set
+   for (size_t i: Range(max_number_variables + number_constraints)) {
+      this->active_set[i] = static_cast<int>(i) + this->fortran_shift;
+   }
 }
 
 Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
@@ -194,6 +198,64 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    return direction;
 
 }
+
+void CASADISolver::analyze_constraints(size_t number_variables, size_t number_constraints, Direction& direction) {
+   ConstraintPartition constraint_partition(number_constraints);
+
+   // active constraints
+   for (size_t j: Range(number_variables - static_cast<size_t>(this->k))) {
+      const size_t index = static_cast<size_t>(std::abs(this->active_set[j]) - this->fortran_shift);
+
+      if (index < number_variables) {
+         // bound constraint
+         if (0 <= this->active_set[j]) { // lower bound active
+            direction.multipliers.lower_bounds[index] = this->residuals[index];
+            direction.active_set.bounds.at_lower_bound.push_back(index);
+         }
+         else { // upper bound active */
+            direction.multipliers.upper_bounds[index] = -this->residuals[index];
+            direction.active_set.bounds.at_upper_bound.push_back(index);
+         }
+      }
+      else {
+         // general constraint
+         size_t constraint_index = index - number_variables;
+         constraint_partition.feasible.push_back(constraint_index);
+         if (0 <= this->active_set[j]) { // lower bound active
+            direction.multipliers.constraints[constraint_index] = this->residuals[index];
+            direction.active_set.constraints.at_lower_bound.push_back(constraint_index);
+         }
+         else { // upper bound active
+            direction.multipliers.constraints[constraint_index] = -this->residuals[index];
+            direction.active_set.constraints.at_upper_bound.push_back(constraint_index);
+         }
+      }
+   }
+
+   // inactive constraints
+   for (size_t j: Range(number_variables - static_cast<size_t>(this->k), number_variables + number_constraints)) {
+      size_t index = static_cast<size_t>(std::abs(this->active_set[j]) - this->fortran_shift);
+
+      if (number_variables <= index) { // general constraints
+         size_t constraint_index = index - number_variables;
+         if (this->residuals[index] < 0.) { // infeasible constraint
+            constraint_partition.infeasible.push_back(constraint_index);
+            if (this->active_set[j] < 0) { // upper bound violated
+               constraint_partition.upper_bound_infeasible.push_back(constraint_index);
+            }
+            else { // lower bound violated
+               constraint_partition.lower_bound_infeasible.push_back(constraint_index);
+            }
+         }
+         else { // feasible constraint
+            constraint_partition.feasible.push_back(constraint_index);
+         }
+      }
+   }
+   direction.constraint_partition = constraint_partition;
+}
+
+
 
 Direction CASADISolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
       const std::vector<Interval>& constraint_bounds, const SparseVector<double>& linear_objective,
