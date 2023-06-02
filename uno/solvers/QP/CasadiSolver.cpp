@@ -173,7 +173,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
             direction.multipliers.lower_bounds[i] = 0.0;
             direction.multipliers.upper_bounds[i] = -res["lam_x"].nonzeros()[i];
 
-            direction.active_set.bounds.at_upper_bound.push_back(index);
+            direction.active_set.bounds.at_upper_bound.push_back(i);
          } else {
             direction.multipliers.lower_bounds[i] = 0.0;
             direction.multipliers.upper_bounds[i] = 0.0;
@@ -186,9 +186,9 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
             direction.multipliers.constraints[j] = -res["lam_a"].nonzeros()[j];
 
             if (res["lam_a"].nonzeros()[j] < 0){ // lower bound active
-               direction.active_set.constraints.at_lower_bound.push_back(constraint_index);
+               direction.active_set.constraints.at_lower_bound.push_back(j);
             } else {
-               direction.active_set.constraints.at_upper_bound.push_back(constraint_index);
+               direction.active_set.constraints.at_upper_bound.push_back(j);
             }
          }
       }
