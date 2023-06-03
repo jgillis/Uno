@@ -13,8 +13,8 @@
 #include "tools/Options.hpp"
 
 #include <casadi/casadi.hpp>
-#include "casadi/core/conic.hpp"
-#include "casadi/core/conic_impl.hpp"
+#include <casadi/core/conic.hpp>
+#include <casadi/core/conic_impl.hpp>
 
 class CASADISolver : public QPSolver {
 public:
