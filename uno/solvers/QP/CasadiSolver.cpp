@@ -8,6 +8,8 @@
 #include "optimization/EvaluationErrors.hpp"
 #include "tools/Logger.hpp"
 #include "tools/Infinity.hpp"
+#include "casadi/core/conic.hpp"
+#include "casadi/core/conic_impl.hpp"
 
 using namespace casadi;
 
