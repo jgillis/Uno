@@ -155,6 +155,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    Dict memory_solver = solver.stats();
 
    std::cout << "QP success: " << memory_solver["success"] << std::endl;
+   std::cout << "Unified Return Status: " << memory_solver["unified_return_status"] << std::endl;
 
 
    // ---------------------------------------------------
