@@ -151,7 +151,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    Function solver = conic("solver", "osqp", qp_struct, opts_conic);
 
    DMDict res = solver(args);
-   auto memory_solver = solver->memory(0);
+   auto memory_solver = static_cast<ConicMemory*>(solver->memory(0));
    bool qp_succes = memory_solver->d_qp.success;
    std::cout << "QP success: " << qp_succes << std::endl;
 
