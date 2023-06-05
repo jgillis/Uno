@@ -240,7 +240,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
 }
 
-SubproblemStatus CasadiSolver::status_from_casadi_status(bool success, std::string casadi_status) {
+SubproblemStatus CASADISolver::status_from_casadi_status(bool success, std::string casadi_status) {
    
    if (success == true){
       return SubproblemStatus::OPTIMAL;
