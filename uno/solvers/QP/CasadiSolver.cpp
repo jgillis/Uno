@@ -137,34 +137,39 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    SparsityDict qp_struct = {{"a", A.sparsity()}, {"h", H.sparsity()}};
 
-   Dict opts_osqp;
-   opts_osqp["verbose"] = false;
-   opts_osqp["eps_abs"] = 1e-8;
-   opts_osqp["eps_rel"] = 1e-8;
-   Dict opts_conic;
+   // Dict opts_osqp;
+   // opts_osqp["verbose"] = false;
+   // opts_osqp["eps_abs"] = 1e-8;
+   // opts_osqp["eps_rel"] = 1e-8;
+   Dict opts_highs;
+   opts_highs["output_flag"] = false;
 
-   opts_conic["osqp"] = opts_osqp;
+   Dict opts_conic;
+   opts_conic["highs"] = opts_highs;
 
    // opts_conic["printLevel"] = "none";
    opts_conic["verbose"] = true;
    opts_conic["print_problem"] = false;
    opts_conic["error_on_fail"] = false;
-   Function solver = conic("solver", "osqp", qp_struct, opts_conic);
+   Function solver = conic("solver", "highs", qp_struct, opts_conic);
 
    DMDict res = solver(args);
    Dict memory_solver = solver.stats();
-
-   std::cout << "QP success: " << memory_solver["success"] << std::endl;
-   std::cout << "Unified Return Status: " << memory_solver["unified_return_status"] << std::endl;
 
 
    // ---------------------------------------------------
    // Postprocess the direction
    // ---------------------------------------------------
+   Direction direction(number_variables, number_constraints);
 
+   // Solver status
+   // ----------------
+   direction.status = CasadiSolver::status_from_bqpd_status(memory_solver["success"],
+                                                            memory_solver["unified_return_status"]);
+   std::cout << "QP success: " << memory_solver["success"] << std::endl;
+   std::cout << "Unified Return Status: " << memory_solver["unified_return_status"] << std::endl;
    // Primal variables
    // ----------------
-   Direction direction(number_variables, number_constraints);
    copy_from(direction.primals, res["x"].nonzeros());
    //direction.status = ..... tbd
    this->number_calls++;
@@ -233,6 +238,23 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
       }
    return direction;
 
+}
+
+SubproblemStatus CasadiSolver::status_from_casadi_status(bool success, std::string casadi_status) {
+   
+   if (success == true){
+      return SubproblemStatus::OPTIMAL;
+   } else {
+      switch (casadi_status) {
+      case "Infeasible":
+         return SubproblemStatus::INFEASIBLE;
+      default:
+         DEBUG << "The return status is " << casadi_status;
+         WARNING << YELLOW << " error: ...\n" << RESET;
+         return SubproblemStatus::ERROR;
+      }
+   throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
+   }
 }
 
 Direction CASADISolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,

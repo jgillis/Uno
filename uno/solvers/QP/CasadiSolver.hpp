@@ -31,6 +31,8 @@ public:
 private:
    size_t number_calls{0};
    const bool print_subproblem;
+
+   static SubproblemStatus status_from_casadi_status(bool success, std::string casadi_status);
 };
 
 #endif // UNO_CASADISOLVER_H
