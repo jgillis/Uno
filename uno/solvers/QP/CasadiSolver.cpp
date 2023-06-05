@@ -164,7 +164,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    // Solver status
    // ----------------
-   direction.status = CASADISolver::status_from_bqpd_status(memory_solver["success"],
+   direction.status = CASADISolver::status_from_casadi_status(memory_solver["success"],
                                                             memory_solver["unified_return_status"]);
    std::cout << "QP success: " << memory_solver["success"] << std::endl;
    std::cout << "Unified Return Status: " << memory_solver["unified_return_status"] << std::endl;
