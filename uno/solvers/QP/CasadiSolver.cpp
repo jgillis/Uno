@@ -152,9 +152,11 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // opts_conic["printLevel"] = "none";
    opts_conic["verbose"] = true;
    opts_conic["dump_in"] = true;
+   qpsol_options["dump_out"] = true;
+   qpsol_options["dump"] = true;
    opts_conic["print_problem"] = false;
    opts_conic["error_on_fail"] = false;
-   Function solver = conic("solver", "osqp", qp_struct, opts_conic);
+   Function solver = conic("solver", "highs", qp_struct, opts_conic);
 
    DMDict res = solver(args);
    Dict memory_solver = solver.stats();
