@@ -137,21 +137,23 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    SparsityDict qp_struct = {{"a", A.sparsity()}, {"h", H.sparsity()}};
 
-   // Dict opts_osqp;
-   // opts_osqp["verbose"] = false;
-   // opts_osqp["eps_abs"] = 1e-8;
-   // opts_osqp["eps_rel"] = 1e-8;
-   Dict opts_highs;
-   opts_highs["output_flag"] = false;
+   Dict opts_osqp;
+   opts_osqp["verbose"] = false;
+   opts_osqp["eps_abs"] = 1e-8;
+   opts_osqp["eps_rel"] = 1e-8;
+   opts_osqp["max_iter"] = 20000;
+   // Dict opts_highs;
+   // opts_highs["output_flag"] = false;
 
    Dict opts_conic;
-   opts_conic["highs"] = opts_highs;
+   // opts_conic["highs"] = opts_highs;
+   opts_conic["osqp"] = opts_osqp;
 
    // opts_conic["printLevel"] = "none";
    opts_conic["verbose"] = true;
    opts_conic["print_problem"] = false;
    opts_conic["error_on_fail"] = false;
-   Function solver = conic("solver", "highs", qp_struct, opts_conic);
+   Function solver = conic("solver", "osqp", qp_struct, opts_conic);
 
    DMDict res = solver(args);
    Dict memory_solver = solver.stats();
@@ -165,7 +167,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // Solver status
    // ----------------
    direction.status = CASADISolver::status_from_casadi_status(memory_solver["success"],
-                                                            memory_solver["return_status"]);
+                                                            memory_solver["unified_return_status"]);
    std::cout << "QP success: " << memory_solver["success"] << std::endl;
    std::cout << "Unified Return Status: " << memory_solver["unified_return_status"] << std::endl;
    // Primal variables
@@ -245,7 +247,7 @@ SubproblemStatus CASADISolver::status_from_casadi_status(bool success, std::stri
    if (success == true){
       return SubproblemStatus::OPTIMAL;
    } else {
-      if (casadi_status == "Infeasible") {
+      if (casadi_status == "SOLVER_RET_INFEASIBLE") {
          return SubproblemStatus::INFEASIBLE;
       } else {
          DEBUG << "The return status is " << casadi_status;
