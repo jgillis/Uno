@@ -247,6 +247,7 @@ SubproblemStatus CASADISolver::status_from_casadi_status(bool success, std::stri
    if (success == true){
       return SubproblemStatus::OPTIMAL;
    } else {
+      return SubproblemStatus::INFEASIBLE;
       if (casadi_status == "SOLVER_RET_INFEASIBLE") {
          return SubproblemStatus::INFEASIBLE;
       } else {
