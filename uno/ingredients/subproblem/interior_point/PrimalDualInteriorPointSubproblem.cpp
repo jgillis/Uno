@@ -43,7 +43,7 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics&
 }
 
 inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
-   assert(problem.inequality_constraints.empty() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
+   assert(problem.has_inequality_constraints() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
 
    // evaluate the constraints at the original point
    initial_iterate.evaluate_constraints(problem.model);
@@ -121,7 +121,6 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
       problem.evaluate_objective_gradient(current_iterate, this->evaluations.objective_gradient);
 
       // barrier terms
-      // TODO urgent: use the correct bounds (if TR, all the original variables are bounded)
       // TODO: the allocated size for objective_gradient is probably too small
       for (size_t i: Range(problem.number_variables)) {
          double barrier_term = 0.;
@@ -152,7 +151,7 @@ void PrimalDualInteriorPointSubproblem::evaluate_functions(Statistics& statistic
 
 Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
       const WarmstartInformation& warmstart_information) {
-   if (not problem.inequality_constraints.empty()) {
+   if (problem.has_inequality_constraints()) {
       throw std::runtime_error("The problem has inequality constraints. Create an instance of EqualityConstrainedModel.\n");
    }
    if (is_finite(this->trust_region_radius)) {
@@ -242,6 +241,11 @@ void PrimalDualInteriorPointSubproblem::exit_feasibility_problem(const Nonlinear
    this->compute_least_square_multipliers(problem, trial_iterate);
 }
 
+std::function<double(double)> PrimalDualInteriorPointSubproblem::compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
+      const Iterate& current_iterate, const Direction& direction, double step_length) const {
+   return problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length, *this->hessian_model->hessian);
+}
+
 void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const NonlinearProblem& problem, Iterate& iterate) {
    // auxiliary measure: barrier terms
    double barrier_terms = 0.;
@@ -263,10 +267,11 @@ void PrimalDualInteriorPointSubproblem::set_auxiliary_measure(const NonlinearPro
    iterate.progress.auxiliary_terms = barrier_terms;
 }
 
-double PrimalDualInteriorPointSubproblem::generate_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
+double PrimalDualInteriorPointSubproblem::compute_predicted_auxiliary_reduction_model(const NonlinearProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    const double directional_derivative = this->compute_barrier_term_directional_derivative(problem, current_iterate, direction);
    // TODO: take exponent of (-directional_derivative), see IPOPT paper
+   // TODO: damping terms?
    return step_length * (-directional_derivative);
    // }, "α*(μ*X^{-1} e^T d)"};
 }
@@ -298,11 +303,11 @@ void PrimalDualInteriorPointSubproblem::update_barrier_parameter(const Nonlinear
 
 // Section 3.9 in IPOPT paper
 bool PrimalDualInteriorPointSubproblem::is_small_step(const NonlinearProblem& problem, const Iterate& current_iterate, const Direction& direction) const {
-   const auto relative_measure_function = [&](size_t i) {
+   VectorExpression<double> relative_direction_size(problem.number_variables, [&](size_t i) {
       return direction.primals[i] / (1 + std::abs(current_iterate.primals[i]));
-   };
+   });
    static double machine_epsilon = std::numeric_limits<double>::epsilon();
-   return (norm_inf<double>(relative_measure_function, Range(problem.number_variables)) <= this->parameters.small_direction_factor * machine_epsilon);
+   return (norm_inf(relative_direction_size) <= this->parameters.small_direction_factor * machine_epsilon);
 }
 
 double PrimalDualInteriorPointSubproblem::evaluate_subproblem_objective() const {

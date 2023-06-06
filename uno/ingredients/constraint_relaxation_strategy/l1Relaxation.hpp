@@ -4,6 +4,7 @@
 #ifndef UNO_L1RELAXATION_H
 #define UNO_L1RELAXATION_H
 
+#include <memory>
 #include "ConstraintRelaxationStrategy.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
 #include "reformulation/OptimalityProblem.hpp"
@@ -52,7 +53,7 @@ protected:
    // preallocated temporary multipliers
    Multipliers trial_multipliers;
 
-   Direction solve_sequence_of_relaxed_problems(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
+   Direction solve_sequence_of_relaxed_subproblems(Statistics& statistics, Iterate& current_iterate, WarmstartInformation& warmstart_information);
    Direction solve_l1_relaxed_problem(Statistics& statistics, Iterate& current_iterate, double current_penalty_parameter,
          const WarmstartInformation& warmstart_information);
    Direction solve_subproblem(Statistics& statistics, const NonlinearProblem& problem, Iterate& current_iterate,
@@ -60,7 +61,7 @@ protected:
 
    // functions that decrease the penalty parameter to enforce particular conditions
    void decrease_parameter_aggressively(Iterate& current_iterate, const Direction& direction);
-   double compute_dual_error(Iterate& current_iterate);
+   double compute_infeasible_dual_error(Iterate& current_iterate);
    [[nodiscard]] Direction enforce_linearized_residual_sufficient_decrease(Statistics& statistics, Iterate& current_iterate, Direction& direction,
          double linearized_residual, double residual_lowest_violation, WarmstartInformation& warmstart_information);
    [[nodiscard]] bool linearized_residual_sufficient_decrease(const Iterate& current_iterate, double linearized_residual,
@@ -70,10 +71,12 @@ protected:
    [[nodiscard]] bool is_descent_direction_for_l1_merit_function(const Iterate& current_iterate, const Direction& direction,
          const Direction& direction_lowest_violation) const;
 
-   // progress measures and their local models
-   void set_progress_measures_for_l1_relaxed_problem(Iterate& iterate);
-   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models_for_l1_relaxed_problem(const Iterate& current_iterate, const Direction& direction,
+   void set_progress_measures(Iterate& iterate) const;
+   [[nodiscard]] ProgressMeasures compute_predicted_reduction_models(Iterate& current_iterate, const Direction& direction,
          double step_length);
+
+   [[nodiscard]] double compute_complementarity_error(const std::vector<double>& primals, const std::vector<double>& constraints,
+         const Multipliers& multipliers) const override;
 
    void add_statistics(Statistics& statistics, const Iterate& trial_iterate) const;
    void check_exact_relaxation(Iterate& iterate) const;
