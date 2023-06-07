@@ -19,7 +19,7 @@ FeasibilityRestorationFunnel::FeasibilityRestorationFunnel(Statistics& statistic
       // create the globalization strategies (one for each phase)
       restoration_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("feasibility_restoration_restoration_phase_strategy"), false, options)),
       optimality_phase_strategy(GlobalizationStrategyFactory::create(statistics, options.get_string("feasibility_restoration_optimality_phase_strategy"), true, options)),
-      
+      // create tolerance and test for linearized feasibility
       tolerance(options.get_double("tolerance")),
       test_linearized_feasibility(options.get_bool("feasibility_restoration_test_linearized_feasibility")) {
    statistics.add_column("phase", Statistics::int_width, options.get_int("statistics_restoration_phase_column_order"));
@@ -36,7 +36,7 @@ void FeasibilityRestorationFunnel::initialize(Iterate& initial_iterate) {
    this->restoration_phase_strategy->initialize(initial_iterate);
    this->optimality_phase_strategy->initialize(initial_iterate);
 
-   // Newly added for Funnel
+   // Newly added for Funnel: synchronize both
    this->restoration_phase_strategy->funnel_width = this->optimality_phase_strategy->funnel_width;
 }
 
