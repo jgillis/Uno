@@ -9,7 +9,7 @@
 #include "linear_algebra/view.hpp"
 
 FeasibilityRestorationFunnel::FeasibilityRestorationFunnel(Statistics& statistics, const Model& model, const Options& options) :
-      FeasibilityRestoration(statistics, model, options),
+      ConstraintRelaxationStrategy(model, options),
       // create the (optimality phase) optimality problem (= original model)
       optimality_problem(model),
       // create the (restoration phase) feasibility problem (objective multiplier = 0)
