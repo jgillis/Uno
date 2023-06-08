@@ -58,7 +58,11 @@ private:
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& inequality_index, const std::vector<double>& constraints,
          const Multipliers& multipliers) const override;
 
+
+protected:
    void add_statistics(Statistics& statistics, const Iterate& trial_iterate) const;
+
+
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

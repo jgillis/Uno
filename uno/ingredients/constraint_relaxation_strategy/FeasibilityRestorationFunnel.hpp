@@ -32,8 +32,8 @@ public:
    [[nodiscard]] bool is_iterate_acceptable(Statistics& statistics, Iterate& current_iterate, Iterate& trial_iterate, const Direction& direction,
          double step_length) override;
 
-   [[nodiscard]] size_t get_hessian_evaluation_count() const override;
-   [[nodiscard]] size_t get_number_subproblems_solved() const override;
+//    [[nodiscard]] size_t get_hessian_evaluation_count() const override;
+//    [[nodiscard]] size_t get_number_subproblems_solved() const override;
 
 private:
    const OptimalityProblem optimality_problem;
@@ -61,7 +61,7 @@ private:
    [[nodiscard]] double compute_complementarity_error(const std::vector<double>& inequality_index, const std::vector<double>& constraints,
          const Multipliers& multipliers) const override;
 
-   void add_statistics(Statistics& statistics, const Iterate& trial_iterate) const;
+//    void add_statistics(Statistics& statistics, const Iterate& trial_iterate) const;
 };
 
 #endif //UNO_FEASIBILITYRESTORATION_H

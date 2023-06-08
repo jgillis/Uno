@@ -270,28 +270,28 @@ double FeasibilityRestorationFunnel::compute_complementarity_error(const std::ve
    return norm(this->residual_norm, variable_complementarity, constraint_complementarity);
 }
 
-void FeasibilityRestorationFunnel::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {
-   if (this->current_phase == Phase::OPTIMALITY) {
-      statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
-      statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
-      if (this->original_model.is_constrained()) {
-         statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
-      }
-   }
-   else {
-      statistics.add_statistic("complementarity", trial_iterate.residuals.feasibility_complementarity);
-      statistics.add_statistic("stationarity", trial_iterate.residuals.feasibility_stationarity);
-      if (this->original_model.is_constrained()) {
-         statistics.add_statistic("primal infeas.", trial_iterate.progress.optimality(1.));
-      }
-   }
-   statistics.add_statistic("phase", static_cast<int>(this->current_phase));
-}
+// void FeasibilityRestorationFunnel::add_statistics(Statistics& statistics, const Iterate& trial_iterate) const {
+//    if (this->current_phase == Phase::OPTIMALITY) {
+//       statistics.add_statistic("complementarity", trial_iterate.residuals.optimality_complementarity);
+//       statistics.add_statistic("stationarity", trial_iterate.residuals.optimality_stationarity);
+//       if (this->original_model.is_constrained()) {
+//          statistics.add_statistic("primal infeas.", trial_iterate.progress.infeasibility);
+//       }
+//    }
+//    else {
+//       statistics.add_statistic("complementarity", trial_iterate.residuals.feasibility_complementarity);
+//       statistics.add_statistic("stationarity", trial_iterate.residuals.feasibility_stationarity);
+//       if (this->original_model.is_constrained()) {
+//          statistics.add_statistic("primal infeas.", trial_iterate.progress.optimality(1.));
+//       }
+//    }
+//    statistics.add_statistic("phase", static_cast<int>(this->current_phase));
+// }
 
-size_t FeasibilityRestorationFunnel::get_hessian_evaluation_count() const {
-   return this->subproblem->get_hessian_evaluation_count();
-}
+// size_t FeasibilityRestorationFunnel::get_hessian_evaluation_count() const {
+//    return this->subproblem->get_hessian_evaluation_count();
+// }
 
-size_t FeasibilityRestorationFunnel::get_number_subproblems_solved() const {
-   return this->subproblem->number_subproblems_solved;
-}
+// size_t FeasibilityRestorationFunnel::get_number_subproblems_solved() const {
+//    return this->subproblem->number_subproblems_solved;
+// }
