@@ -4,7 +4,7 @@
 #ifndef UNO_FEASIBILITYRESTORATIONFUNNEL_H
 #define UNO_FEASIBILITYRESTORATIONFUNNEL_H
 
-#include "ConstraintRelaxationStrategy.hpp"
+#include "FeasibilityRestoration.hpp"
 #include "ingredients/globalization_strategy/GlobalizationStrategy.hpp"
 #include "reformulation/OptimalityProblem.hpp"
 #include "reformulation/l1RelaxedProblem.hpp"
@@ -13,7 +13,7 @@
 
 // enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
-class FeasibilityRestorationFunnel : public ConstraintRelaxationStrategy {
+class FeasibilityRestorationFunnel : public FeasibilityRestoration {
 public:
    FeasibilityRestorationFunnel(Statistics& statistics, const Model& model, const Options& options);
    void initialize(Iterate& initial_iterate) override;
