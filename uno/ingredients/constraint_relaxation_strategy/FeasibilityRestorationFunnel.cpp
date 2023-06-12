@@ -45,10 +45,6 @@ Direction FeasibilityRestorationFunnel::compute_feasible_direction(Statistics& s
    // if we are in the optimality phase, solve the optimality problem
    if (this->current_phase == Phase::OPTIMALITY) {
       try {
-         if (!this->optimality_phase_strategy->current_iterate_acceptable_to_funnel){
-            this->switch_to_feasibility_problem(current_iterate, warmstart_information);
-         }
-         else {
             DEBUG << "Solving the optimality subproblem\n";
             Direction direction = this->solve_subproblem(statistics, this->optimality_problem, current_iterate, warmstart_information);
             // infeasible subproblem: switch to the feasibility problem, starting from the current direction
@@ -60,7 +56,6 @@ Direction FeasibilityRestorationFunnel::compute_feasible_direction(Statistics& s
                // things ran smoothly: return the direction
                return direction;
             }
-         }
       }
       catch (const UnstableRegularization&) {
          this->switch_to_feasibility_problem(current_iterate, warmstart_information);
@@ -80,15 +75,14 @@ Direction FeasibilityRestorationFunnel::compute_feasible_direction(Statistics& s
    return this->compute_feasible_direction(statistics, current_iterate, warmstart_information);
 }
 
-
 void FeasibilityRestorationFunnel::synchronize_from_restoration_to_optimality_phase() {
    this->optimality_phase_strategy->funnel_width = this->restoration_phase_strategy->funnel_width;
-   this->optimality_phase_strategy->current_iterate_acceptable_to_funnel = this->restoration_phase_strategy->current_iterate_acceptable_to_funnel;
+   // this->optimality_phase_strategy->current_iterate_acceptable_to_funnel = this->restoration_phase_strategy->current_iterate_acceptable_to_funnel;
 }
 
 void FeasibilityRestorationFunnel::synchronize_from_optimality_to_restoration_phase() {
    this->restoration_phase_strategy->funnel_width = this->optimality_phase_strategy->funnel_width;
-   this->restoration_phase_strategy->current_iterate_acceptable_to_funnel = this->optimality_phase_strategy->current_iterate_acceptable_to_funnel;
+   // this->restoration_phase_strategy->current_iterate_acceptable_to_funnel = this->optimality_phase_strategy->current_iterate_acceptable_to_funnel;
 }
 
 void FeasibilityRestorationFunnel::switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) {
@@ -146,16 +140,18 @@ void FeasibilityRestorationFunnel::compute_progress_measures(Iterate& current_it
    if (this->current_phase == Phase::FEASIBILITY_RESTORATION && (not this->test_linearized_feasibility ||
       this->original_model.compute_linearized_constraint_violation(direction.primals, current_iterate.evaluations.constraints,
                current_iterate.evaluations.constraint_jacobian, step_length, this->residual_norm) <= this->tolerance)) {
+      
       //if the trial infeasibility improves upon the best known infeasibility of the globalization strategy
-      trial_iterate.evaluate_constraints(this->original_model);
-      const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
+      // trial_iterate.evaluate_constraints(this->original_model);
+      // const double trial_infeasibility = this->original_model.compute_constraint_violation(trial_iterate.evaluations.constraints, this->progress_norm);
       // if (this->optimality_phase_strategy->is_infeasibility_acceptable(trial_infeasibility)) {
       //    this->switch_to_optimality(current_iterate, trial_iterate);
       // }
-      if (this->restoration_phase_strategy->current_iterate_acceptable_to_funnel) {
-         // std::cout << "Feasibility is improved after restoration" << std::endl;
-         this->switch_to_optimality(current_iterate, trial_iterate);
-      }
+      // if (this->restoration_phase_strategy->current_iterate_acceptable_to_funnel) {
+      //    // std::cout << "Feasibility is improved after restoration" << std::endl;
+      //    this->switch_to_optimality(current_iterate, trial_iterate);
+      // }
+      this->switch_to_optimality(current_iterate, trial_iterate);
    }
 
    // evaluate the progress measures of the trial iterate

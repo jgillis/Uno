@@ -14,7 +14,6 @@ void FunnelRestorationStrategy::update_funnel_width(double current_infeasibility
 
    // this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
    //    trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
-
    if (trial_infeasibility_measure <= this->funnel_width){
       if (current_infeasibility_measure > this->funnel_width){
          this->funnel_width = std::min(this->parameters.kappa_infeasibility_1 *this->funnel_width,
@@ -61,7 +60,6 @@ bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, co
 
    bool accept = false;
    bool funnel_acceptable = false;
-
    
    const double actual_reduction = this->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
          trial_optimality_measure);
