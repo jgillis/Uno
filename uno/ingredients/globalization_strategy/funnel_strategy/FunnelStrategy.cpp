@@ -28,6 +28,9 @@ void FunnelStrategy::initialize(const Iterate& initial_iterate) {
    double upper_bound = std::max(this->parameters.kappa_initial_upper_bound,
                                  this->parameters.kappa_initial_multiplication * initial_iterate.progress.infeasibility);
 
+   // std::cout << "Initial kappa upper bound: " << upper_bound << std::endl;
+   // std::cout << "Initial infeasibility: " << initial_iterate.progress.infeasibility << std::endl;
+   // std::cout << "Initial funnel upper bound: " << upper_bound << std::endl;
    this->initial_funnel_upper_bound = upper_bound;
    this->funnel_width = initial_funnel_upper_bound;
    this->current_iterate_acceptable_to_funnel = true;

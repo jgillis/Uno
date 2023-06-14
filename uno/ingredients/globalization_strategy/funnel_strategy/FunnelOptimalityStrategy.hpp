@@ -41,6 +41,8 @@ public:
          const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction, double objective_multiplier) override;
    
    void update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure);
+   virtual bool acceptable_wrt_current_iterate(double current_infeasibility_measure, 
+         double current_optimality_measure, double trial_infeasibility_measure, double trial_optimality_measure);
    // void reset() override;
    // void register_current_progress(const ProgressMeasures& current_progress_measures) override;
 
@@ -50,8 +52,6 @@ public:
 //    double initial_funnel_upper_bound{INF<double>};
 //    // const FunnelStrategyParameters parameters; /*!< Set of constants */
 
-
-//    [[nodiscard]] bool switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const;
 };
 
 #endif // UNO_FUNNELSTRATEGY_H

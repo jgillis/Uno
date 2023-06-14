@@ -18,9 +18,11 @@ void FunnelRestorationStrategy::update_funnel_width(double current_infeasibility
       if (current_infeasibility_measure > this->funnel_width){
          this->funnel_width = std::min(this->parameters.kappa_infeasibility_1 *this->funnel_width,
          trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (funnel_width - trial_infeasibility_measure));
+         // std::cout << "Funnel Update Restoration: Current iterate outside funnel" << std::endl;
       } else {
          this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
          trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
+         // std::cout << "Funnel Update Restoration: Current iterate inside funnel" << std::endl;
       }
    } //else: do not reduce the funnel
 
