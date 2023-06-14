@@ -16,27 +16,8 @@ FunnelOptimalityStrategy::FunnelOptimalityStrategy(Statistics& statistics, const
 
 void FunnelOptimalityStrategy::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
 
-   // if (trial_infeasibility_measure <= this->parameters.kappa_infeasibility_1*current_infeasibility_measure){
-   //    this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
-   //    trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
-   // } else{
-   //    this->funnel_width = std::min(this->parameters.kappa_infeasibility_1 *this->funnel_width,
-   //    trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (funnel_width - trial_infeasibility_measure));
-   // }
-
-   if (trial_infeasibility_measure <= this->funnel_width){
-      // this->funnel_width = std::min(this->parameters.kappa_infeasibility_1 *this->funnel_width,
-      //    trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (funnel_width - trial_infeasibility_measure));
-      if (current_infeasibility_measure > this->funnel_width){
-         this->funnel_width = std::min(this->parameters.kappa_infeasibility_1 *this->funnel_width,
-         trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (funnel_width - trial_infeasibility_measure));
-         // std::cout << "Funnel Update Optimality: Current iterate outside funnel" << std::endl;
-      } else {
-         this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
-         trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
-         // std::cout << "Funnel Update Optimality: Current iterate inside funnel" << std::endl;
-      }
-   } //else: do not reduce the funnel
+   this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width,
+      trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (funnel_width - trial_infeasibility_measure));
 
    DEBUG << "\t\tNew funnel parameter is: " << this->funnel_width << "\n"; 
    
@@ -80,9 +61,8 @@ bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, con
    bool funnel_reduction_mechanism = false;
    bool funnel_acceptable = false;
 
-   if (this->current_iterate_acceptable_to_funnel){
-      DEBUG << "\t\tCurrent iterate IN Funnel\n";
-      // switching condition: the unconstrained predicted reduction is sufficiently positive
+   funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_progress_measures.infeasibility);
+   if (funnel_acceptable) {
       if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
          DEBUG << "\t\tTrial iterate satisfies switching condition ....\n";
          // check acceptance 
@@ -100,72 +80,61 @@ bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, con
             DEBUG << "\t\tArmijo condition not satisfied, trial iterate REJECTED\n";
          }
       } else {
-         DEBUG << "\t\tTrial iterate violates switching condition ...\n";
-         funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_progress_measures.infeasibility);
-         if (funnel_acceptable) {
-            DEBUG << "\t\tFunnel condition acceptable\n";
-            funnel_reduction_mechanism = true;
-            accept = true; // accept the step and reduce the tr-radius
-         } else {
-            DEBUG << "\t\tFunnel condition NOT acceptable\n";
-         }
+         DEBUG << "\t\tTrial iterate ACCEPTED by violating the switching condition ...\n";
+         funnel_reduction_mechanism = true;
+         accept = true; // accept the step and reduce the tr-radius
       }
    } else {
-      // step is rejected --> this is very much like to tolerance-tube approach
-      DEBUG << "\t\tCurrent iterate NOT in Funnel\n";
-
-      const double actual_reduction = this->compute_actual_reduction(current_infeasibility_measure, current_progress_measures.infeasibility,
-         trial_infeasibility_measure);
-      DEBUG << "\t\tActual reduction feasibility: " << actual_reduction << '\n';
-      if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction_infeasibility, actual_reduction)) {
-         DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition for INFEASIBILITY\n";
-         accept = true;
-      } else {
-         DEBUG << "\t\tTrial iterate was NOT ACCEPTED by violating Armijo condition for INFEASIBILITY\n";
-
-      }
+      DEBUG << "\t\tTrial iterate REJECTED by violating Funnel condition\n";
+      // acceptable = false;
+      // funnel_reduction_mechanism = false;
    }
 
-   // ------------------------------------------------------------------------
-
-   // // switching condition: the unconstrained predicted reduction is sufficiently positive
-   // if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
-   //    DEBUG << "\t\tTrial iterate satisfies switching condition ....\n";
-   //    // check acceptance 
-   //    const double actual_reduction = this->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
-   //          trial_optimality_measure);
-   //    DEBUG << "\t\tActual reduction: " << actual_reduction << '\n';
-      
-   //    // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
-   //    if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
-   //       DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition\n";
-   //       accept = true;
-   //       // decrease funnel here??? ......
-   //    }
-   //    else { // switching condition holds, but not Armijo condition
-   //       DEBUG << "\t\tArmijo condition not satisfied, trial iterate REJECTED\n";
-   //    }
-   // }
-   // else {
-   //    DEBUG << "\t\tTrial iterate violates switching condition ...\n";
-   //    funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_progress_measures.infeasibility);
-   //    if (funnel_acceptable) {
-   //       DEBUG << "\t\tFunnel condition acceptable\n";
-   //       funnel_reduction_mechanism = true;
-   //       accept = true; // accept the step and reduce the tr-radius
-   //    } else {
-   //       // step is rejected
-   //       DEBUG << "\t\tFunnel condition NOT acceptable\n";
-
-   //       const double actual_reduction = this->compute_actual_reduction(current_infeasibility_measure, current_progress_measures.infeasibility,
-   //          trial_infeasibility_measure);
-   //       if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction_infeasibility, actual_reduction)) {
-   //          DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition for INFEASIBILITY\n";
+   // if (this->current_iterate_acceptable_to_funnel){
+   //    DEBUG << "\t\tCurrent iterate IN Funnel\n";
+   //    // switching condition: the unconstrained predicted reduction is sufficiently positive
+   //    if (this->switching_condition(unconstrained_predicted_reduction, current_progress_measures.infeasibility, this->parameters.delta)) {
+   //       DEBUG << "\t\tTrial iterate satisfies switching condition ....\n";
+   //       // check acceptance 
+   //       const double actual_reduction = this->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
+   //             trial_optimality_measure);
+   //       DEBUG << "\t\tActual reduction: " << actual_reduction << '\n';
+         
+   //       // unconstrained Armijo sufficient decrease condition (predicted reduction should be positive)
+   //       if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
+   //          DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition\n";
    //          accept = true;
+   //          // decrease funnel here??? ......
+   //       }
+   //       else { // switching condition holds, but not Armijo condition
+   //          DEBUG << "\t\tArmijo condition not satisfied, trial iterate REJECTED\n";
+   //       }
+   //    } else {
+   //       DEBUG << "\t\tTrial iterate violates switching condition ...\n";
+   //       funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_progress_measures.infeasibility);
+   //       if (funnel_acceptable) {
+   //          DEBUG << "\t\tFunnel condition acceptable\n";
+   //          funnel_reduction_mechanism = true;
+   //          accept = true; // accept the step and reduce the tr-radius
+   //       } else {
+   //          DEBUG << "\t\tFunnel condition NOT acceptable\n";
    //       }
    //    }
-   // }
+   // } else {
+   //    // step is rejected --> this is very much like to tolerance-tube approach
+   //    DEBUG << "\t\tCurrent iterate NOT in Funnel\n";
 
+   //    const double actual_reduction = this->compute_actual_reduction(current_infeasibility_measure, current_progress_measures.infeasibility,
+   //       trial_infeasibility_measure);
+   //    DEBUG << "\t\tActual reduction feasibility: " << actual_reduction << '\n';
+   //    if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction_infeasibility, actual_reduction)) {
+   //       DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition for INFEASIBILITY\n";
+   //       accept = true;
+   //    } else {
+   //       DEBUG << "\t\tTrial iterate was NOT ACCEPTED by violating Armijo condition for INFEASIBILITY\n";
+
+   //    }
+   // }
    // -------------------------------------------------------------------------
 
    if (funnel_reduction_mechanism){ // steps needs to be accepted for this...
@@ -174,18 +143,18 @@ bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, con
       // // Feasibility measures
       this->update_funnel_width(current_infeasibility_measure, 
                                              trial_infeasibility_measure);
-      this->funnel_width = this->get_funnel_width(); //?                                            ;
+      // this->funnel_width = this->get_funnel_width(); //?                                            ;
    }
 
-   if (accept){
-      if (this->is_infeasibility_acceptable_to_funnel(trial_infeasibility_measure)){
-         this->current_iterate_acceptable_to_funnel = true;
-         DEBUG << "New Iterate inside of FUNNEL\n";
-      }
-      else {
-         this->current_iterate_acceptable_to_funnel = false;
-      }
-   }
+   // if (accept){
+   //    if (this->is_infeasibility_acceptable_to_funnel(trial_infeasibility_measure)){
+   //       this->current_iterate_acceptable_to_funnel = true;
+   //       DEBUG << "New Iterate inside of FUNNEL\n";
+   //    }
+   //    else {
+   //       this->current_iterate_acceptable_to_funnel = false;
+   //    }
+   // }
 
    return accept;
 }

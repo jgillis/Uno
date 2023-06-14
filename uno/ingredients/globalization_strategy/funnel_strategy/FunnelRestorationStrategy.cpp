@@ -59,7 +59,7 @@ bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, co
    DEBUG << "\t\t" << *this << '\n';
 
    bool accept = false;
-   bool funnel_acceptable = false;
+   // bool funnel_acceptable = false;
    
    const double actual_reduction = this->compute_actual_reduction(current_optimality_measure, current_progress_measures.infeasibility,
          trial_optimality_measure);
@@ -72,6 +72,8 @@ bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, co
       if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction, actual_reduction)) {
          DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition\n";
          accept = true;
+         this->update_funnel_width(current_optimality_measure, 
+                                    trial_optimality_measure);
       }
       else { // switching condition holds, but not Armijo condition
          DEBUG << "\t\tArmijo condition not satisfied, trial iterate REJECTED\n";
@@ -82,31 +84,31 @@ bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, co
    }
 
    // We are in restoration phase, i.e., optimality measure contains the infeasibility!
-   if (accept){
-      if (this->is_infeasibility_acceptable_to_funnel(trial_optimality_measure)){
-         this->current_iterate_acceptable_to_funnel = true;
-      }
-      else {
-         this->current_iterate_acceptable_to_funnel = false;
-      }
+   // if (accept){
+   //    if (this->is_infeasibility_acceptable_to_funnel(trial_optimality_measure)){
+   //       this->current_iterate_acceptable_to_funnel = true;
+   //    }
+   //    else {
+   //       this->current_iterate_acceptable_to_funnel = false;
+   //    }
 
 
 
-      funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_optimality_measure);
-      // check acceptance   
-      if (funnel_acceptable) {
-         DEBUG << "\t\tFunnel condition satisfied\n";
+   //    funnel_acceptable = this->is_infeasibility_acceptable_to_funnel(trial_optimality_measure);
+   //    // check acceptance   
+   //    if (funnel_acceptable) {
+   //       DEBUG << "\t\tFunnel condition satisfied\n";
          
-         // do update 1
-         this->update_funnel_width(current_optimality_measure, 
-                                    trial_optimality_measure);
-         this->funnel_width = this->get_funnel_width(); 
-         this->current_iterate_acceptable_to_funnel = true;
-         DEBUG << "\t\t New Iterate inside of FUNNEL\n";
-      }
-      else {
-         this->current_iterate_acceptable_to_funnel = false;
-      }
+   //       // do update 1
+   //       this->update_funnel_width(current_optimality_measure, 
+   //                                  trial_optimality_measure);
+   //       this->funnel_width = this->get_funnel_width(); 
+   //       this->current_iterate_acceptable_to_funnel = true;
+   //       DEBUG << "\t\t New Iterate inside of FUNNEL\n";
+   //    }
+   //    else {
+   //       this->current_iterate_acceptable_to_funnel = false;
+   //    }
       // } else {
 
       //    // do update 2
@@ -116,7 +118,7 @@ bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, co
       //    this->funnel_width = this->funnel->get_funnel_size();   
       // }
       // Funnel has changed, check, if still acceptable
-   }
+   // }
 
    return accept;
 }
