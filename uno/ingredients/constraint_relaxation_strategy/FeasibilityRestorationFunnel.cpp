@@ -77,12 +77,12 @@ Direction FeasibilityRestorationFunnel::compute_feasible_direction(Statistics& s
 
 void FeasibilityRestorationFunnel::synchronize_from_restoration_to_optimality_phase() {
    this->optimality_phase_strategy->funnel_width = this->restoration_phase_strategy->funnel_width;
-   // this->optimality_phase_strategy->current_iterate_acceptable_to_funnel = this->restoration_phase_strategy->current_iterate_acceptable_to_funnel;
+   this->optimality_phase_strategy->current_iterate_acceptable_to_funnel = this->restoration_phase_strategy->current_iterate_acceptable_to_funnel;
 }
 
 void FeasibilityRestorationFunnel::synchronize_from_optimality_to_restoration_phase() {
    this->restoration_phase_strategy->funnel_width = this->optimality_phase_strategy->funnel_width;
-   // this->restoration_phase_strategy->current_iterate_acceptable_to_funnel = this->optimality_phase_strategy->current_iterate_acceptable_to_funnel;
+   this->restoration_phase_strategy->current_iterate_acceptable_to_funnel = this->optimality_phase_strategy->current_iterate_acceptable_to_funnel;
 }
 
 void FeasibilityRestorationFunnel::switch_to_feasibility_problem(Iterate& current_iterate, WarmstartInformation& warmstart_information) {

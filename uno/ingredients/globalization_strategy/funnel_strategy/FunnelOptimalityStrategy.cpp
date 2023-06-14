@@ -34,7 +34,7 @@ void FunnelOptimalityStrategy::update_funnel_width(double current_infeasibility_
       } else {
          this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
          trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
-         std::cout << "Funnel Update Optimality: Current iterate inside funnel" << std::endl;
+         // std::cout << "Funnel Update Optimality: Current iterate inside funnel" << std::endl;
       }
    } //else: do not reduce the funnel
 
@@ -116,9 +116,13 @@ bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, con
 
       const double actual_reduction = this->compute_actual_reduction(current_infeasibility_measure, current_progress_measures.infeasibility,
          trial_infeasibility_measure);
+      DEBUG << "\t\tActual reduction feasibility: " << actual_reduction << '\n';
       if (this->armijo_sufficient_decrease(unconstrained_predicted_reduction_infeasibility, actual_reduction)) {
          DEBUG << "\t\tTrial iterate was ACCEPTED by satisfying Armijo condition for INFEASIBILITY\n";
          accept = true;
+      } else {
+         DEBUG << "\t\tTrial iterate was NOT ACCEPTED by violating Armijo condition for INFEASIBILITY\n";
+
       }
    }
 
@@ -176,6 +180,7 @@ bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, con
    if (accept){
       if (this->is_infeasibility_acceptable_to_funnel(trial_infeasibility_measure)){
          this->current_iterate_acceptable_to_funnel = true;
+         DEBUG << "New Iterate inside of FUNNEL\n";
       }
       else {
          this->current_iterate_acceptable_to_funnel = false;
