@@ -5,6 +5,9 @@
 #include "l1MeritFunction.hpp"
 #include "filter_method/LeyfferFilterMethod.hpp"
 #include "filter_method/WaechterFilterMethod.hpp"
+#include "funnel_method/FunnelMethod.hpp"
+#include "funnel_method/FunnelRestorationMethod.hpp"
+#include "funnel_method/FunnelOptimalityMethod.hpp"
 
 std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Statistics& statistics, const std::string& strategy_type,
       bool accept_when_switching_violated, const Options& options) {
@@ -17,9 +20,18 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Sta
    else if (strategy_type == "waechter_filter_method") {
       return std::make_unique<WaechterFilterMethod>(statistics, options);
    }
+   else if (strategy_type == "funnel_method") {
+      return std::make_unique<FunnelMethod>(statistics, options);
+   }
+   else if (strategy_type == "funnel_restoration_method") {
+      return std::make_unique<FunnelRestorationMethod>(statistics, options);
+   }
+   else if (strategy_type == "funnel_optimality_method") {
+      return std::make_unique<FunnelOptimalityMethod>(statistics, options);
+   }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }
 
 std::vector<std::string> GlobalizationStrategyFactory::available_strategies() {
-   return {"l1_merit", "leyffer_filter_strategy", "waechter_filter_strategy"};
+   return {"l1_merit", "leyffer_filter_strategy", "waechter_filter_strategy", "funnel_strategy"};
 }

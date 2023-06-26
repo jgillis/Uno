@@ -49,6 +49,11 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
          Uno::add_statistics(statistics, current_iterate, major_iterations);
          if (Logger::level == INFO) statistics.print_current_line();
 
+         statistics.add_iteration();
+         // add iteration to map, if planned to serialize
+         // if (statistics.serialize_iterations == true){
+         // }
+
          termination = this->termination_criteria(current_iterate.status, major_iterations, timer.get_duration());
       }
    }
@@ -59,6 +64,7 @@ Result Uno::solve(Statistics& statistics, const Model& model, Iterate& current_i
    catch (std::exception& exception) {
       ERROR << RED << exception.what() << RESET;
    }
+   statistics.serialize();
    Uno::postprocess_iterate(model, current_iterate, current_iterate.status);
 
    if (Logger::level == INFO) statistics.print_footer();

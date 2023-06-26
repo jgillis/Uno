@@ -13,6 +13,8 @@
 /*! \class GlobalizationStrategy
  *  Ingredient that accepts or rejects a trial iterate
  */
+
+
 class GlobalizationStrategy {
 public:
    explicit GlobalizationStrategy(const Options& options);
@@ -25,10 +27,15 @@ public:
 
    virtual void reset() = 0;
    virtual void register_current_progress(const ProgressMeasures& current_progress) = 0;
+   
+   // Newly added variables
+   bool current_iterate_acceptable_to_funnel;
+   double funnel_width;
 
 protected:
    const double armijo_decrease_fraction; /*!< Sufficient reduction constant */
    const double armijo_tolerance;
+
 
    [[nodiscard]] bool armijo_sufficient_decrease(double predicted_reduction, double actual_reduction) const;
 };

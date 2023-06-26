@@ -32,6 +32,7 @@ statistics_penalty_parameter_column_order 5
 statistics_regularization_column_order 6
 statistics_barrier_parameter_column_order 8
 statistics_SOC_column_order 9
+statistics_funnel_size_column_order 15
 statistics_LS_step_length_column_order 30
 statistics_TR_radius_column_order 30
 statistics_step_norm_column_order 31
@@ -118,6 +119,26 @@ filter_capacity 50
 # nonmonotone filter strategy
 nonmonotone_filter_number_dominated_entries 3
 
+##### funnel options #####
+# funnel strategy options
+
+# funnel type (standard|nonmonotone)
+# funnel_type standard
+
+# funnel options
+funnel_kappa_infeasibility_1 0.9
+funnel_kappa_infeasibility_2 0.9
+funnel_gamma 0.001
+funnel_delta 0.999
+
+# funnel strategy options
+funnel_kappa_initial_upper_bound 1.0
+funnel_kappa_initial_multiplication 1.1
+funnel_ubd 1e2
+funnel_fact 1.25
+funnel_switching_infeasibility_exponent 2
+funnel_optimality_phase 
+
 ##### line search options #####
 # backtracking ratio
 LS_backtracking_ratio 0.5
@@ -197,6 +218,8 @@ l1_small_duals_threshold 1e-10
 ##### feasibility restoration options #####
 # test linearized feasibility when switching back to phase 2
 feasibility_restoration_test_linearized_feasibility no
+feasibility_restoration_restoration_phase_strategy leyffer_filter_strategy
+feasibility_restoration_optimality_phase_strategy leyffer_filter_strategy
 
 ##### barrier subproblem options #####
 barrier_initial_parameter 0.1

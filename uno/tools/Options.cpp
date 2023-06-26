@@ -140,6 +140,33 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["sparse_format"] = "CSC";
       options["LS_scale_duals_with_step_length"] = "no";
    }
+   else if (preset_name == "funnelsqp") {
+      options["constraint_relaxation_strategy"] = "feasibility_restoration_funnel";
+      options["subproblem"] = "QP";
+      options["globalization_mechanism"] = "TR";
+      options["globalization_strategy"] = "funnel_method";
+      // options["filter_type"] = "standard";
+      options["progress_norm"] = "L1";
+      options["residual_norm"] = "L2";
+      options["sparse_format"] = "CSC";
+      options["TR_radius"] = "10";
+      options["l1_constraint_violation_coefficient"] = "1.";
+      options["enforce_linear_constraints"] = "yes";
+      options["tolerance"] = "1e-6";
+      options["TR_min_radius"] = "1e-8";
+      options["feasibility_restoration_test_linearized_feasibility"] = "yes";
+      options["terminate_with_small_step"] = "yes";
+
+      options["funnel_beta"] = "0.999";
+      options["funnel_gamma"] = "0.001";
+      options["funnel_delta"] = "0.999";
+      options["funnel_ubd"] = "1e2";
+      options["funnel_fact"] = "1.25";
+      options["funnel_switching_infeasibility_exponent"] = "2";
+      options["funnel_capacity"] = "50";
+      options["feasibility_restoration_restoration_phase_strategy"] = "funnel_restoration_method";
+      options["feasibility_restoration_optimality_phase_strategy"] = "funnel_optimality_method";
+   }
 }
 
 void get_command_line_options(int argc, char* argv[], Options& options) {
