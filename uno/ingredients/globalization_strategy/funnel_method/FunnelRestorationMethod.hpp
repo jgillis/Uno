@@ -8,7 +8,7 @@
 #include "funnel/Funnel.hpp"
 #include "tools/Options.hpp"
 #include "tools/Infinity.hpp"
-#include "FunnelStrategy.hpp"
+#include "FunnelMethod.hpp"
 
 /*! \class TwoPhaseConstants
  * \brief Constants for funnel strategy
@@ -26,14 +26,14 @@
 
 // enum class Phase {FEASIBILITY_RESTORATION = 1, OPTIMALITY = 2};
 
-/*! \class FunnelStrategy
+/*! \class FunnelMethod
  * \brief Step acceptance strategy based on a funnel
  *
  *  Strategy that accepts or declines a trial step
  */
-class FunnelRestorationStrategy : public FunnelStrategy {
+class FunnelRestorationMethod : public FunnelMethod {
 public:
-   explicit FunnelRestorationStrategy(Statistics& statistics, const Options& options);
+   explicit FunnelRestorationMethod(Statistics& statistics, const Options& options);
 
    // void initialize(const Iterate& initial_iterate) override;
    // [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;

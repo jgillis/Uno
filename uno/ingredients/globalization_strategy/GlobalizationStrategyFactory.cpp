@@ -5,9 +5,9 @@
 #include "l1MeritFunction.hpp"
 #include "filter_method/LeyfferFilterMethod.hpp"
 #include "filter_method/WaechterFilterMethod.hpp"
-#include "funnel_strategy/FunnelStrategy.hpp"
-#include "funnel_strategy/FunnelRestorationStrategy.hpp"
-#include "funnel_strategy/FunnelOptimalityStrategy.hpp"
+#include "funnel_method/FunnelMethod.hpp"
+#include "funnel_method/FunnelRestorationMethod.hpp"
+#include "funnel_method/FunnelOptimalityMethod.hpp"
 
 std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Statistics& statistics, const std::string& strategy_type,
       bool accept_when_switching_violated, const Options& options) {
@@ -20,14 +20,14 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Sta
    else if (strategy_type == "waechter_filter_method") {
       return std::make_unique<WaechterFilterMethod>(statistics, options);
    }
-   else if (strategy_type == "funnel_strategy") {
-      return std::make_unique<FunnelStrategy>(statistics, options);
+   else if (strategy_type == "funnel_method") {
+      return std::make_unique<FunnelMethod>(statistics, options);
    }
-   else if (strategy_type == "funnel_restoration_strategy") {
-      return std::make_unique<FunnelRestorationStrategy>(statistics, options);
+   else if (strategy_type == "funnel_restoration_method") {
+      return std::make_unique<FunnelRestorationMethod>(statistics, options);
    }
-   else if (strategy_type == "funnel_optimality_strategy") {
-      return std::make_unique<FunnelOptimalityStrategy>(statistics, options);
+   else if (strategy_type == "funnel_optimality_method") {
+      return std::make_unique<FunnelOptimalityMethod>(statistics, options);
    }
    throw std::invalid_argument("GlobalizationStrategy " + strategy_type + " is not supported");
 }

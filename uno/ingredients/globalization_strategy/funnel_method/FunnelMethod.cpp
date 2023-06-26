@@ -2,10 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cmath>
-#include "FunnelStrategy.hpp"
+#include "FunnelMethod.hpp"
 // #include "funnel/FunnelFactory.hpp"
 
-FunnelStrategy::FunnelStrategy(Statistics& statistics, const Options& options) :
+FunnelMethod::FunnelMethod(Statistics& statistics, const Options& options) :
       GlobalizationStrategy(options),
       parameters({
          options.get_double("funnel_kappa_initial_upper_bound"),
@@ -23,7 +23,7 @@ FunnelStrategy::FunnelStrategy(Statistics& statistics, const Options& options) :
 
 }
 
-void FunnelStrategy::initialize(const Iterate& initial_iterate) {
+void FunnelMethod::initialize(const Iterate& initial_iterate) {
    // set the funnel upper bound
    double upper_bound = std::max(this->parameters.kappa_initial_upper_bound,
                                  this->parameters.kappa_initial_multiplication * initial_iterate.progress.infeasibility);
@@ -38,18 +38,18 @@ void FunnelStrategy::initialize(const Iterate& initial_iterate) {
 
 }
 
-void FunnelStrategy::reset() {
+void FunnelMethod::reset() {
    // re-initialize the restoration funnel
    // this->funnel->reset();
    // this->funnel->initial_upper_bound = this->initial_funnel_upper_bound;
 }
 
-void FunnelStrategy::register_current_progress(const ProgressMeasures& /*current_progress_measures*/) {
+void FunnelMethod::register_current_progress(const ProgressMeasures& /*current_progress_measures*/) {
    // const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;
    // this->funnel->add(current_progress_measures.infeasibility, current_optimality_measure);
 }
 
-bool FunnelStrategy::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const {
+bool FunnelMethod::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const {
    if (infeasibility_measure <= this->funnel_width){
       return true;
    }
@@ -59,15 +59,15 @@ bool FunnelStrategy::is_infeasibility_acceptable_to_funnel(double infeasibility_
    }
 }
 
-bool FunnelStrategy::is_infeasibility_acceptable(double infeasibility_measure) const {
+bool FunnelMethod::is_infeasibility_acceptable(double infeasibility_measure) const {
    return this->is_infeasibility_acceptable_to_funnel(infeasibility_measure);
 }
 
-bool FunnelStrategy::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
+bool FunnelMethod::switching_condition(double predicted_reduction, double current_infeasibility, double switching_fraction) const {
    return predicted_reduction > switching_fraction * std::pow(current_infeasibility, this->parameters.switching_infeasibility_exponent);
 }
 
-void FunnelStrategy::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
+void FunnelMethod::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
 
    // this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
    //    trial_infeasibility_measure + this->parameters.kappa_infeasibility_2 * (current_infeasibility_measure - trial_infeasibility_measure));
@@ -84,16 +84,16 @@ void FunnelStrategy::update_funnel_width(double current_infeasibility_measure, d
 // }
 
 
-double FunnelStrategy::get_funnel_width(){
+double FunnelMethod::get_funnel_width(){
    return this->funnel_width;
 }
 
-double FunnelStrategy::compute_actual_reduction(double current_optimality_measure, double /*current_infeasibility_measure*/, double trial_optimality_measure) {
+double FunnelMethod::compute_actual_reduction(double current_optimality_measure, double /*current_infeasibility_measure*/, double trial_optimality_measure) {
    return current_optimality_measure - trial_optimality_measure;
 }
 
 //! print: print the current funnel parameter
-std::ostream& operator<<(std::ostream& stream, FunnelStrategy& funnel) {
+std::ostream& operator<<(std::ostream& stream, FunnelMethod& funnel) {
    stream << "************\n";
    stream << "\t\t  Current funnel width:\n";
    stream << "\t\t\t" << funnel.funnel_width << '\n';
@@ -118,7 +118,7 @@ std::ostream& operator<<(std::ostream& stream, FunnelStrategy& funnel) {
  * funnel methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool FunnelStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
+bool FunnelMethod::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
    // const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;

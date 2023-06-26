@@ -144,7 +144,7 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["constraint_relaxation_strategy"] = "feasibility_restoration_funnel";
       options["subproblem"] = "QP";
       options["globalization_mechanism"] = "TR";
-      options["globalization_strategy"] = "funnel_strategy";
+      options["globalization_strategy"] = "funnel_method";
       // options["filter_type"] = "standard";
       options["progress_norm"] = "L1";
       options["residual_norm"] = "L2";
@@ -164,8 +164,8 @@ void find_preset(const std::string& preset_name, Options& options) {
       options["funnel_fact"] = "1.25";
       options["funnel_switching_infeasibility_exponent"] = "2";
       options["funnel_capacity"] = "50";
-      options["feasibility_restoration_restoration_phase_strategy"] = "funnel_restoration_strategy";
-      options["feasibility_restoration_optimality_phase_strategy"] = "funnel_optimality_strategy";
+      options["feasibility_restoration_restoration_phase_strategy"] = "funnel_restoration_method";
+      options["feasibility_restoration_optimality_phase_strategy"] = "funnel_optimality_method";
    }
 }
 

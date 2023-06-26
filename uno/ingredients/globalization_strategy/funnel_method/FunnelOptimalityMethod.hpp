@@ -8,7 +8,7 @@
 #include "funnel/Funnel.hpp"
 #include "tools/Options.hpp"
 #include "tools/Infinity.hpp"
-#include "FunnelStrategy.hpp"
+#include "FunnelMethod.hpp"
 
 /*! \class TwoPhaseConstants
  * \brief Constants for funnel strategy
@@ -31,9 +31,9 @@
  *
  *  Strategy that accepts or declines a trial step
  */
-class FunnelOptimalityStrategy : public FunnelStrategy {
+class FunnelOptimalityMethod : public FunnelMethod {
 public:
-   explicit FunnelOptimalityStrategy(Statistics& statistics, const Options& options);
+   explicit FunnelOptimalityMethod(Statistics& statistics, const Options& options);
 
    // void initialize(const Iterate& initial_iterate) override;
    // [[nodiscard]] bool is_infeasibility_acceptable(double infeasibility_measure) const override;

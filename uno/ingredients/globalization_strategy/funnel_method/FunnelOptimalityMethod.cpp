@@ -2,11 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cmath>
-#include "FunnelOptimalityStrategy.hpp"
-// #include "funnel/FunnelFactory.hpp"
+#include "FunnelOptimalityMethod.hpp"
 
-FunnelOptimalityStrategy::FunnelOptimalityStrategy(Statistics& statistics, const Options& options) :
-      FunnelStrategy(statistics, options)
+FunnelOptimalityMethod::FunnelOptimalityMethod(Statistics& statistics, const Options& options) :
+      FunnelMethod(statistics, options)
      { }
 
 /* check acceptability of step(s) (funnel & sufficient reduction)
@@ -14,7 +13,7 @@ FunnelOptimalityStrategy::FunnelOptimalityStrategy(Statistics& statistics, const
  * precondition: feasible step
  * */
 
-void FunnelOptimalityStrategy::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
+void FunnelOptimalityMethod::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
 
    // if (trial_infeasibility_measure <= this->parameters.kappa_infeasibility_1*current_infeasibility_measure){
    //    this->funnel_width = std::max(this->parameters.kappa_infeasibility_1 *this->funnel_width, 
@@ -43,13 +42,13 @@ void FunnelOptimalityStrategy::update_funnel_width(double current_infeasibility_
 }
 
 //! check acceptability wrt current point
-bool FunnelOptimalityStrategy::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
+bool FunnelOptimalityMethod::acceptable_wrt_current_iterate(double current_infeasibility_measure, double current_optimality_measure, double trial_infeasibility_measure,
       double trial_optimality_measure) {
    return (trial_optimality_measure <= current_optimality_measure - this->parameters.gamma * trial_infeasibility_measure) ||
           (trial_infeasibility_measure < this->parameters.beta * current_infeasibility_measure);
 }
 
-bool FunnelOptimalityStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
+bool FunnelOptimalityMethod::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
    const double current_optimality_measure = current_progress_measures.optimality(1.) + current_progress_measures.auxiliary_terms;

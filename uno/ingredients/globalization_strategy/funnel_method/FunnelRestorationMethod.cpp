@@ -2,15 +2,15 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include <cmath>
-#include "FunnelRestorationStrategy.hpp"
+#include "FunnelRestorationMethod.hpp"
 // #include "funnel/FunnelFactory.hpp"
 
-FunnelRestorationStrategy::FunnelRestorationStrategy(Statistics& statistics, const Options& options) :
-      FunnelStrategy(statistics, options)
+FunnelRestorationMethod::FunnelRestorationMethod(Statistics& statistics, const Options& options) :
+      FunnelMethod(statistics, options)
    {}
 
 
-void FunnelRestorationStrategy::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
+void FunnelRestorationMethod::update_funnel_width(double current_infeasibility_measure, double trial_infeasibility_measure) {
 
    if (trial_infeasibility_measure <= this->funnel_width){
       if (current_infeasibility_measure > this->funnel_width){
@@ -33,7 +33,7 @@ void FunnelRestorationStrategy::update_funnel_width(double current_infeasibility
  * funnel methods enforce an *unconstrained* sufficient decrease condition
  * precondition: feasible step
  * */
-bool FunnelRestorationStrategy::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
+bool FunnelRestorationMethod::is_iterate_acceptable(Statistics& statistics, const Iterate& /*trial_iterate*/,
       const ProgressMeasures& current_progress_measures, const ProgressMeasures& trial_progress_measures, const ProgressMeasures& predicted_reduction,
       double /*objective_multiplier*/) {
 
