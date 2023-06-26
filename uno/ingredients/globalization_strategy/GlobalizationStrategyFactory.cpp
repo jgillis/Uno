@@ -3,8 +3,8 @@
 
 #include "GlobalizationStrategyFactory.hpp"
 #include "l1MeritFunction.hpp"
-#include "filter_strategy/LeyfferFilterStrategy.hpp"
-#include "filter_strategy/WaechterFilterStrategy.hpp"
+#include "filter_method/LeyfferFilterMethod.hpp"
+#include "filter_method/WaechterFilterMethod.hpp"
 #include "funnel_strategy/FunnelStrategy.hpp"
 #include "funnel_strategy/FunnelRestorationStrategy.hpp"
 #include "funnel_strategy/FunnelOptimalityStrategy.hpp"
@@ -14,11 +14,11 @@ std::unique_ptr <GlobalizationStrategy> GlobalizationStrategyFactory::create(Sta
    if (strategy_type == "l1_merit") {
       return std::make_unique<l1MeritFunction>(statistics, options);
    }
-   else if (strategy_type == "leyffer_filter_strategy") {
-      return std::make_unique<LeyfferFilterStrategy>(statistics, accept_when_switching_violated, options);
+   else if (strategy_type == "leyffer_filter_method") {
+      return std::make_unique<LeyfferFilterMethod>(statistics, accept_when_switching_violated, options);
    }
-   else if (strategy_type == "waechter_filter_strategy") {
-      return std::make_unique<WaechterFilterStrategy>(statistics, options);
+   else if (strategy_type == "waechter_filter_method") {
+      return std::make_unique<WaechterFilterMethod>(statistics, options);
    }
    else if (strategy_type == "funnel_strategy") {
       return std::make_unique<FunnelStrategy>(statistics, options);
