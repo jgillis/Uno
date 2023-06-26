@@ -43,7 +43,9 @@ PrimalDualInteriorPointSubproblem::PrimalDualInteriorPointSubproblem(Statistics&
 }
 
 inline void PrimalDualInteriorPointSubproblem::generate_initial_iterate(const NonlinearProblem& problem, Iterate& initial_iterate) {
-   assert(problem.has_inequality_constraints() && "The problem has inequality constraints. Create an instance of EqualityConstrainedModel");
+   if (problem.has_inequality_constraints()) {
+      throw std::runtime_error("The problem has inequality constraints. Create an instance of EqualityConstrainedModel.\n");
+   }
 
    // evaluate the constraints at the original point
    initial_iterate.evaluate_constraints(problem.model);
@@ -171,7 +173,7 @@ Direction PrimalDualInteriorPointSubproblem::solve(Statistics& statistics, const
 
    // compute the primal-dual solution
    this->augmented_system.solve(*this->linear_solver);
-   assert(this->direction.status == SubproblemStatus::OPTIMAL && "The barrier subproblem was not solved to optimality");
+   assert(this->direction.status == SubproblemStatus::OPTIMAL && "The primal-dual perturbed subproblem was not solved to optimality");
    this->number_subproblems_solved++;
    this->assemble_primal_dual_direction(problem, current_iterate);
    statistics.add_statistic("barrier param.", this->barrier_parameter());

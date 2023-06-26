@@ -6,7 +6,7 @@
 #include "solvers/LP/LPSolverFactory.hpp"
 
 LPSubproblem::LPSubproblem(size_t max_number_variables, size_t max_number_constraints, const Options& options) :
-      ActiveSetSubproblem(max_number_variables, max_number_constraints),
+      InequalityConstrainedMethod(max_number_variables, max_number_constraints),
       solver(LPSolverFactory::create(max_number_variables, max_number_constraints, options.get_string("LP_solver"), options)) {
 }
 
@@ -41,7 +41,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
    Direction direction = this->solver->solve_LP(problem.number_variables, problem.number_constraints, this->direction_bounds,
          this->linearized_constraint_bounds, this->evaluations.objective_gradient, this->evaluations.constraint_jacobian,
          this->initial_point, warmstart_information);
-   ActiveSetSubproblem::compute_dual_displacements(problem, current_iterate, direction);
+   InequalityConstrainedMethod::compute_dual_displacements(problem, current_iterate, direction);
    this->number_subproblems_solved++;
    // reset the initial point
    initialize_vector(this->initial_point, 0.);
@@ -51,7 +51,7 @@ Direction LPSubproblem::solve(Statistics& /*statistics*/, const NonlinearProblem
 std::function<double(double)> LPSubproblem::compute_predicted_optimality_reduction_model(const NonlinearProblem& problem,
       const Iterate& current_iterate, const Direction& direction, double step_length) const {
    return problem.compute_predicted_optimality_reduction_model(current_iterate, direction, step_length,
-         COOSymmetricMatrix<double>::zero_hessian(direction.number_variables));
+         COOSymmetricMatrix<double>::zero(direction.number_variables));
 }
 
 size_t LPSubproblem::get_hessian_evaluation_count() const {

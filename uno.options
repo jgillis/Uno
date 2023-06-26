@@ -1,6 +1,11 @@
 ##### termination #####
-# tolerance
+# (tight) tolerance
 tolerance 1e-8
+
+# loose tolerance used if tight tolerance cannot be reached
+loose_tolerance 1e-6
+# number of iterations during which the loose tolerance is monitored
+loose_tolerance_consecutive_iteration_threshold 15
 
 # maximum outer iterations
 max_iterations 2000
@@ -43,8 +48,8 @@ constraint_relaxation_strategy feasibility_restoration
 # default subproblem (QP|LP|primal_dual_interior_point)
 subproblem QP
 
-# default globalization strategy (l1_merit|leyffer_filter_strategy|waechter_filter_strategy)
-globalization_strategy leyffer_filter_strategy
+# default globalization strategy (l1_merit|leyffer_filter_method|waechter_filter_method)
+globalization_strategy leyffer_filter_method
 
 # default globalization mechanism (TR|LS)
 globalization_mechanism TR
