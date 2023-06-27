@@ -49,7 +49,7 @@ void FunnelMethod::register_current_progress(const ProgressMeasures& /*current_p
    // this->funnel->add(current_progress_measures.infeasibility, current_optimality_measure);
 }
 
-bool FunnelStrategy::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const {
+bool FunnelMethod::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const {
    if (infeasibility_measure <= this->parameters.beta*this->funnel_width){
       return true;
    }
