@@ -50,7 +50,7 @@ void FunnelMethod::register_current_progress(const ProgressMeasures& /*current_p
 }
 
 bool FunnelMethod::is_infeasibility_acceptable_to_funnel(double infeasibility_measure) const {
-   if (infeasibility_measure <= this->funnel_width){
+   if (infeasibility_measure <= this->parameters.beta*this->funnel_width){
       return true;
    }
    else {
