@@ -206,7 +206,12 @@ endif()
 # find libraries
 set(LIBRARIES "")
 set(OPTIONAL_LIBRARIES amplsolver ma57 metis bqpd CACHE STRING "Optional libraries")
-set(REQUIRED_LIBRARIES dl blas lapack)
+
+set(REQUIRED_LIBRARIES blas lapack)
+
+if(NOT WIN32)
+    set(REQUIRED_LIBRARIES ${REQUIRED_LIBRARIES} dl)
+endif()
 
 # automatic detection of optional libraries
 foreach(library_name IN LISTS OPTIONAL_LIBRARIES)
