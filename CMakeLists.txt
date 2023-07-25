@@ -165,6 +165,7 @@ message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 
 option(WITH_AMPL "Enable AMPL" OFF)
 option(WITH_CASADI "Enable CASADI" OFF)
+option(WITH_OPENMP "Enable OpenMP" ON)
 
 if (WITH_AMPL)
     add_definitions("-DWITH_AMPL")
@@ -248,8 +249,10 @@ foreach(library_name IN LISTS REQUIRED_LIBRARIES)
 		list(APPEND LIBRARIES ${${library_name}})
 	endif()
 endforeach(library_name)
-find_package(OpenMP REQUIRED)
-list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
+if(WITH_OPENMP)
+    find_package(OpenMP REQUIRED)
+    list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
+endif()
 
 #######
 # Uno #
