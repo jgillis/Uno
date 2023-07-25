@@ -206,6 +206,8 @@ endif()
 # find libraries
 set(LIBRARIES "")
 set(OPTIONAL_LIBRARIES amplsolver ma57 metis bqpd CACHE STRING "Optional libraries")
+set(OPTIONAL_LIBRARIES_NAMES_metis coinmetis)
+set(OPTIONAL_LIBRARIES_NAMES_ma57 hsl)
 
 set(REQUIRED_LIBRARIES blas lapack)
 
@@ -215,7 +217,7 @@ endif()
 
 # automatic detection of optional libraries
 foreach(library_name IN LISTS OPTIONAL_LIBRARIES)
-	find_library(${library_name} ${library_name})
+	find_library(${library_name} ${library_name} NAMES ${OPTIONAL_LIBRARIES_NAMES_${library_name}} PATHS ${${library_name}_LIB})
 	# ${library_name} is the name of the library(e.g. ma57)
 	# ${${library_name}} is the path of the library if found, otherwise ${library_name}-NOTFOUND
 	if(${${library_name}} STREQUAL "${library_name}-NOTFOUND")
