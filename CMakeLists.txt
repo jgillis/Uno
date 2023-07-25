@@ -244,14 +244,18 @@ endforeach(library_name)
 
 # automatic detection of required libraries
 foreach(library_name IN LISTS REQUIRED_LIBRARIES)
-	find_library(${library_name} ${library_name})
-	# ${library_name} is the name of the library(e.g. blas)
-	# ${${library_name}} is the path of the library if found, otherwise ${library_name}-NOTFOUND
-	if(${${library_name}} STREQUAL "${library_name}-NOTFOUND")
-		message(FATAL_ERROR "Required library ${library_name} was not found. Use ccmake to configure its path.")
+    string(TOUPPER ${library_name} library_name_upper )
+	find_package(${library_name_upper} QUIET)
+	if(${${library_name_upper}_FOUND})
+	    list(APPEND LIBRARIES ${${library_name}_LIBRARIES})
 	else()
-		# add the library
-		list(APPEND LIBRARIES ${${library_name}})
+	    find_library(${library_name} ${library_name})
+	    if(${${library_name}} STREQUAL "${library_name}-NOTFOUND")
+		    message(FATAL_ERROR "Required library ${library_name} was not found. Use ccmake to configure its path.")
+	    else()
+		    # add the library
+		    list(APPEND LIBRARIES ${${library_name}})
+	    endif()
 	endif()
 endforeach(library_name)
 if(WITH_OPENMP)
