@@ -166,6 +166,7 @@ message(STATUS "GoogleTest: WITH_GTEST=${WITH_GTEST}")
 option(WITH_AMPL "Enable AMPL" OFF)
 option(WITH_CASADI "Enable CASADI" OFF)
 option(WITH_OPENMP "Enable OpenMP" ON)
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 if (WITH_AMPL)
     add_definitions("-DWITH_AMPL")
@@ -268,8 +269,11 @@ endif()
 #######
 # Uno #
 #######
-add_library(uno SHARED ${UNO_SOURCE_FILES})
+add_library(uno ${UNO_SOURCE_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(uno PUBLIC UNO_SHARED)
+endif()
 
 # link the libraries
 target_link_libraries(uno PUBLIC ${LIBRARIES})

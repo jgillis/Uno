@@ -21,8 +21,13 @@ enum Level {
 
 class Logger {
 public:
-    static Level level;
+   static Level level;
+#ifdef UNO_SHARED
+    void set_logger(const std::string& logger_level);
+#else
     static void set_logger(const std::string& logger_level);
+#endif
+
 };
 
 template <typename T>
@@ -41,6 +46,7 @@ const Level& operator<<(const Level& level, const T& element) {
     return level;
 }
 
+#ifndef UNO_SHARED
 inline void Logger::set_logger(const std::string& logger_level) {
    if (logger_level == "ERROR") {
       Logger::level = ERROR;
@@ -61,5 +67,6 @@ inline void Logger::set_logger(const std::string& logger_level) {
       throw std::out_of_range("The logger level " + logger_level + " was not found");
    }
 }
+#endif
 
 #endif // UNO_LOGGER_H
