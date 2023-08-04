@@ -268,7 +268,7 @@ endif()
 #######
 # Uno #
 #######
-add_library(uno STATIC ${UNO_SOURCE_FILES})
+add_library(uno SHARED ${UNO_SOURCE_FILES})
 target_include_directories(uno PUBLIC ${DIRECTORIES})
 
 # link the libraries
