@@ -142,22 +142,45 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // opts_osqp["eps_abs"] = 1e-8;
    // opts_osqp["eps_rel"] = 1e-8;
    // opts_osqp["max_iter"] = 20000;
-   Dict opts_highs;
-   opts_highs["output_flag"] = true;
+   // Dict opts_highs;
+   // opts_highs["output_flag"] = true;
+
+   // Dict opts_conic;
+   // opts_conic["highs"] = opts_highs;
+   // // opts_conic["osqp"] = opts_osqp;
+
+   // // opts_conic["printLevel"] = "none";
+   // opts_conic["verbose"] = true;
+   // opts_conic["dump_in"] = true;
+   // opts_conic["dump_out"] = true;
+   // opts_conic["dump"] = true;
+   // opts_conic["print_problem"] = false;
+   
+   Dict opts_ipopt;
+   opts_ipopt["print_level"] = 0;
+   opts_ipopt["print_time"] = false;
+   opts_ipopt["sb"] = "yes";
+   opts_ipopt["fixed_variable_treatment"] = "make_constraint";
+   opts_ipopt["hessian_constant"] = "yes";
+   opts_ipopt["jac_c_constant"] = "yes";
+   opts_ipopt["jac_d_constant"] = "yes";
+   opts_ipopt["tol"] = 1e-12;
+   opts_ipopt["tiny_step_tol"] = 1e-20;
+   opts_ipopt["bound_relax_factor"] = 0;
+   opts_ipopt["linear_solver"] = "ma57";
+
+   Dict opts_nlpsol;
+   opts_nlpsol["ipopt"] = opts_ipopt;
+   opts_nlpsol["print_time"] = false;
+
 
    Dict opts_conic;
-   opts_conic["highs"] = opts_highs;
-   // opts_conic["osqp"] = opts_osqp;
-
-   // opts_conic["printLevel"] = "none";
-   opts_conic["verbose"] = true;
-   opts_conic["dump_in"] = true;
-   opts_conic["dump_out"] = true;
-   opts_conic["dump"] = true;
-   opts_conic["print_problem"] = false;
+   opts_conic["nlpsol"] = "ipopt";
    opts_conic["error_on_fail"] = false;
-   Function solver = conic("solver", "highs", qp_struct, opts_conic);
+   opts_conic["nlpsol_options"] = opts_nlpsol;
 
+
+   Function solver = conic("solver", "nlpsol", qp_struct, opts_conic);
    DMDict res = solver(args);
    Dict memory_solver = solver.stats();
 
@@ -267,16 +290,32 @@ SubproblemStatus CASADISolver::status_from_casadi_status(bool success, std::stri
    // throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
    // }
 
-   // Solver Highs
+   // // Solver Highs
+   // if (success == true){
+   //    return SubproblemStatus::OPTIMAL;
+   // } else {
+   //    return SubproblemStatus::INFEASIBLE;
+   //    if (casadi_status == "Infeasible") {
+   //       return SubproblemStatus::INFEASIBLE;
+   //    } else {
+   //       DEBUG << "The return status is " << casadi_status;
+   //       WARNING << YELLOW << " error: ...\n" << RESET;
+   //       return SubproblemStatus::ERROR;
+   //    }
+   // throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
+   // }
+
+
+   // Solver Ipopt
    if (success == true){
       return SubproblemStatus::OPTIMAL;
    } else {
-      return SubproblemStatus::INFEASIBLE;
-      if (casadi_status == "Infeasible") {
+      if (casadi_status == "Infeasible_Problem_Detected") {
          return SubproblemStatus::INFEASIBLE;
+      } else if (casadi_status == "Diverging_Iterates"){
+         return SubproblemStatus::UNBOUNDED_PROBLEM;
       } else {
-         DEBUG << "The return status is " << casadi_status;
-         WARNING << YELLOW << " error: ...\n" << RESET;
+         WARNING << YELLOW << " error: " << << casadi_status << "\n" << RESET;
          return SubproblemStatus::ERROR;
       }
    throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
