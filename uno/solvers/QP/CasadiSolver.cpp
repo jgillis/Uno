@@ -198,7 +198,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
                                                             memory_solver["return_status"]);
    
 
-   std::cout << "We are here" << std::endl;
    std::cout << "QP success: " << memory_solver["success"] << std::endl;
    std::cout << "Unified Return Status: " << memory_solver["unified_return_status"] << std::endl;
    // Primal variables
@@ -305,7 +304,7 @@ SubproblemStatus CASADISolver::status_from_casadi_status(bool success, std::stri
    // throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
    // }
 
-
+   std::cout << "We are here" << std::endl;
    // Solver Ipopt
    if (success == true){
       return SubproblemStatus::OPTIMAL;
