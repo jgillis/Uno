@@ -158,7 +158,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    
    Dict opts_ipopt;
    opts_ipopt["print_level"] = 0;
-   // opts_ipopt["print_time"] = false;
    opts_ipopt["sb"] = "yes";
    opts_ipopt["fixed_variable_treatment"] = "make_constraint";
    opts_ipopt["hessian_constant"] = "yes";
@@ -172,7 +171,6 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    Dict opts_nlpsol;
    opts_nlpsol["ipopt"] = opts_ipopt;
    opts_nlpsol["print_time"] = false;
-
 
    Dict opts_conic;
    opts_conic["nlpsol"] = "ipopt";
@@ -221,6 +219,10 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    // TODO: check signs (validate with BQPSolver answer)
    //       do we need to construct activate set? see BQPDSolver::analyze_constraints
+
+
+   std::cout << "Lagrange Multipliers bounds: " <<  res["lam_x"] << std::endl;
+   std::cout << "Lagrange Multipliers constraints: " <<  res["lam_a"] << std::endl;
 
    for (size_t i: Range(number_variables)) {
          
