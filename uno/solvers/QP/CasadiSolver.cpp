@@ -315,7 +315,7 @@ SubproblemStatus CASADISolver::status_from_casadi_status(bool success, std::stri
       } else if (casadi_status == "Diverging_Iterates"){
          return SubproblemStatus::UNBOUNDED_PROBLEM;
       } else {
-         WARNING << YELLOW << " error: " << << casadi_status << "\n" << RESET;
+         WARNING << YELLOW << " error: " << casadi_status << "\n" << RESET;
          return SubproblemStatus::ERROR;
       }
    throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
