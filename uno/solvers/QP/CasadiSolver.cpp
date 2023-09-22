@@ -183,6 +183,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    Function solver = conic("solver", "nlpsol", qp_struct, opts_conic);
    DMDict res = solver(args);
    Dict memory_solver = solver.stats();
+   Dict memory_ipopt = memory_solver["solver_stats"];
 
 
    // ---------------------------------------------------
@@ -193,12 +194,12 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // Solver status
    // ----------------
    // direction.status = CASADISolver::status_from_casadi_status(memory_solver["success"],
-   std::cout << "Memeory: " << memory_solver << std::endl;
+   // std::cout << "Memeory: " << memory_solver << std::endl;
    // std::cout << "QP success: " << memory_solver["success"] << std::endl;
    // std::cout << "Unified Return Status: " << memory_solver["return_status"] << std::endl;
    //                                                          memory_solver["unified_return_status"]);
-   direction.status = CASADISolver::status_from_casadi_status(memory_solver["success"],
-                                                            memory_solver["return_status"]);
+   direction.status = CASADISolver::status_from_casadi_status(memory_ipopt["success"],
+                                                            memory_ipopt["return_status"]);
    
 
    // Primal variables
@@ -305,7 +306,6 @@ SubproblemStatus CASADISolver::status_from_casadi_status(bool success, std::stri
    // throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
    // }
 
-   std::cout << "We are here" << std::endl;
    // Solver Ipopt
    if (success == true){
       return SubproblemStatus::OPTIMAL;
