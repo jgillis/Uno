@@ -158,7 +158,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    
    Dict opts_ipopt;
    opts_ipopt["print_level"] = 0;
-   opts_ipopt["print_time"] = false;
+   // opts_ipopt["print_time"] = false;
    opts_ipopt["sb"] = "yes";
    opts_ipopt["fixed_variable_treatment"] = "make_constraint";
    opts_ipopt["hessian_constant"] = "yes";
