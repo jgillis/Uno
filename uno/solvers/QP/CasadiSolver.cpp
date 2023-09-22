@@ -177,12 +177,11 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    opts_conic["error_on_fail"] = false;
    opts_conic["nlpsol_options"] = opts_nlpsol;
 
-
    Function solver = conic("solver", "nlpsol", qp_struct, opts_conic);
+   // Problem is solved here
    DMDict res = solver(args);
    Dict memory_solver = solver.stats();
    Dict memory_ipopt = memory_solver["solver_stats"];
-
 
    // ---------------------------------------------------
    // Postprocess the direction
@@ -198,14 +197,11 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    //                                                          memory_solver["unified_return_status"]);
    direction.status = CASADISolver::status_from_casadi_status(memory_ipopt["success"],
                                                             memory_ipopt["return_status"]);
+   this->number_calls++;
    
-
    // Primal variables
    // ----------------
    copy_from(direction.primals, res["x"].nonzeros());
-   //direction.status = ..... tbd
-   this->number_calls++;
-
    // project solution into bounds
    for (size_t i: Range(number_variables)) {
       direction.primals[i] = std::min(std::max(direction.primals[i], variables_bounds[i].lb), variables_bounds[i].ub);
@@ -220,32 +216,45 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // TODO: check signs (validate with BQPSolver answer)
    //       do we need to construct activate set? see BQPDSolver::analyze_constraints
 
-
    std::cout << "Lagrange Multipliers bounds: " <<  res["lam_x"] << std::endl;
    std::cout << "Lagrange Multipliers constraints: " <<  res["lam_a"] << std::endl;
 
    for (size_t i: Range(number_variables)) {
-         
-         if (res["lam_x"].nonzeros()[i] < 0){ //lower bounds active
-            direction.multipliers.lower_bounds[i] = -res["lam_x"].nonzeros()[i];
-            direction.multipliers.upper_bounds[i] = 0.0;
+         direction.multipliers.lower_bounds[i] = std::max(0., -res["lam_x"].nonzeros()[i]);
+         direction.multipliers.upper_bounds[i] = std::max(0., res["lam_x"].nonzeros()[i]);
 
+         if (direction.multipliers.lower_bounds[i] > 0.){
             direction.active_set.bounds.at_lower_bound.push_back(i);
-         } else if (res["lam_x"].nonzeros()[i] > 0) { // upper bound active
-            direction.multipliers.lower_bounds[i] = 0.0;
-            direction.multipliers.upper_bounds[i] = -res["lam_x"].nonzeros()[i];
-
-            direction.active_set.bounds.at_upper_bound.push_back(i);
-         } else {
-            direction.multipliers.lower_bounds[i] = 0.0;
-            direction.multipliers.upper_bounds[i] = 0.0;
          }
+
+         if (direction.multipliers.upper_bounds[i] > 0.){
+            direction.active_set.bounds.at_upper_bound.push_back(i);
+         }
+
+         // if (res["lam_x"].nonzeros()[i] < 0){ //lower bounds active
+         //    direction.multipliers.lower_bounds[i] = std::max(0., -res["lam_x"].nonzeros()[i]);
+         //    // direction.multipliers.lower_bounds[i] = -res["lam_x"].nonzeros()[i];
+         //    // direction.multipliers.upper_bounds[i] = 0.0;
+
+         //    direction.active_set.bounds.at_lower_bound.push_back(i);
+         // } else if (res["lam_x"].nonzeros()[i] > 0) { // upper bound active
+         //    direction.multipliers.lower_bounds[i] = 0.0;
+         //    direction.multipliers.upper_bounds[i] = -res["lam_x"].nonzeros()[i];
+
+         //    direction.active_set.bounds.at_upper_bound.push_back(i);
+         // } else {
+         //    direction.multipliers.lower_bounds[i] = 0.0;
+         //    direction.multipliers.upper_bounds[i] = 0.0;
+         // }
    }
 
    // Sign convention of Casadi and Uno is apparently different
    for (size_t j: Range(number_constraints)) {
-         // so far, we just deal with feasible subproblems, so:
+
+
+         // TO DO: We need to calculate the feasibility here..
          constraint_partition.feasible.push_back(j);
+         
          if (res["lam_a"].nonzeros()[j] != 0){
             direction.multipliers.constraints[j] = -res["lam_a"].nonzeros()[j];
 
