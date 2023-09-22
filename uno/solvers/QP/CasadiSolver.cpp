@@ -129,7 +129,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    args["lba"] = DM(lba);
    args["uba"] = DM(uba);
 
-   std::cout << "Casadi input to the solver: " << args << std::endl;
+   // std::cout << "Casadi input to the solver: " << args << std::endl;
 
    // ---------------------------------------------------
    // Create the Casadi QP solver and solve the problem
