@@ -157,17 +157,17 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // opts_conic["print_problem"] = false;
    
    Dict opts_ipopt;
-   opts_ipopt["print_level"] = 0;
+   // opts_ipopt["print_level"] = 0;
    // opts_ipopt["print_time"] = false;
    opts_ipopt["sb"] = "yes";
-   opts_ipopt["fixed_variable_treatment"] = "make_constraint";
-   opts_ipopt["hessian_constant"] = "yes";
-   opts_ipopt["jac_c_constant"] = "yes";
-   opts_ipopt["jac_d_constant"] = "yes";
-   opts_ipopt["tol"] = 1e-12;
-   opts_ipopt["tiny_step_tol"] = 1e-20;
-   opts_ipopt["bound_relax_factor"] = 0;
-   opts_ipopt["linear_solver"] = "ma57";
+   // opts_ipopt["fixed_variable_treatment"] = "make_constraint";
+   // opts_ipopt["hessian_constant"] = "yes";
+   // opts_ipopt["jac_c_constant"] = "yes";
+   // opts_ipopt["jac_d_constant"] = "yes";
+   // opts_ipopt["tol"] = 1e-12;
+   // opts_ipopt["tiny_step_tol"] = 1e-20;
+   // opts_ipopt["bound_relax_factor"] = 0;
+   // opts_ipopt["linear_solver"] = "ma57";
 
    Dict opts_nlpsol;
    opts_nlpsol["ipopt"] = opts_ipopt;
