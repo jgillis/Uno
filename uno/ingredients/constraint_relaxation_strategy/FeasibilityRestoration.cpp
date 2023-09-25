@@ -216,9 +216,11 @@ double FeasibilityRestoration::compute_complementarity_error(const std::vector<d
    // bound constraints
    VectorExpression<double> variable_complementarity(this->original_model.number_variables, [&](size_t i) {
       if (0. < multipliers.lower_bounds[i]) {
+         std::cout << "Compl. condition, multipliers: " << multipliers.lower_bounds[i] << "constraints" << primals[i] - this->original_model.get_variable_lower_bound(i) << std::endl;
          return multipliers.lower_bounds[i] * (primals[i] - this->original_model.get_variable_lower_bound(i));
       }
       if (multipliers.upper_bounds[i] < 0.) {
+         std::cout << "Compl. condition, multipliers: " << multipliers.upper_bounds[i] << "constraints" << primals[i] - this->original_model.get_variable_upper_bound(i) << std::endl;
          return multipliers.upper_bounds[i] * (primals[i] - this->original_model.get_variable_upper_bound(i));
       }
       return 0.;
