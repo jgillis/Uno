@@ -221,7 +221,13 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    for (size_t i: Range(number_variables)) {
          direction.multipliers.lower_bounds[i] = std::max(0., -res["lam_x"].nonzeros()[i]);
+         if (variables_bounds[i].lb == -INF){
+            direction.multipliers.lower_bounds[i] = 0;
+         }
          direction.multipliers.upper_bounds[i] = std::max(0., res["lam_x"].nonzeros()[i]);
+         if (variables_bounds[i].ub == INF){
+            direction.multipliers.upper_bounds[i] = 0;
+         }
 
          if (direction.multipliers.lower_bounds[i] > 0.){
             direction.active_set.bounds.at_lower_bound.push_back(i);
