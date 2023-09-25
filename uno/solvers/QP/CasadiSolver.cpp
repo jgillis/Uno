@@ -270,6 +270,9 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
          
          if (res["lam_a"].nonzeros()[j] != 0){
             direction.multipliers.constraints[j] = -res["lam_a"].nonzeros()[j];
+            if (std::abs(direction.multipliers.constraints[j]) < 1e-6) {
+               direction.multipliers.constraints[j] = 0;
+            }
 
             if (res["lam_a"].nonzeros()[j] < 0){ // lower bound active
                direction.active_set.constraints.at_lower_bound.push_back(j);
