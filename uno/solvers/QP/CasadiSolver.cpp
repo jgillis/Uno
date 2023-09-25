@@ -221,11 +221,11 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
 
    for (size_t i: Range(number_variables)) {
          direction.multipliers.lower_bounds[i] = std::max(0., -res["lam_x"].nonzeros()[i]);
-         if (variables_bounds[i].lb == -INF){
+         if (variables_bounds[i].lb == -INF<double>){
             direction.multipliers.lower_bounds[i] = 0;
          }
          direction.multipliers.upper_bounds[i] = std::max(0., res["lam_x"].nonzeros()[i]);
-         if (variables_bounds[i].ub == INF){
+         if (variables_bounds[i].ub == INF<double>){
             direction.multipliers.upper_bounds[i] = 0;
          }
 
