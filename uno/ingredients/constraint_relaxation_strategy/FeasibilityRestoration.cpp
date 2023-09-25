@@ -236,6 +236,8 @@ double FeasibilityRestoration::compute_complementarity_error(const std::vector<d
       return 0.;
    });
    // Some debugging output:
+   std::cout << "Variable complementarity norm: " << norm(this->residual_norm, variable_complementarity) << std::endl;
+   std::cout << "Constraints complementarity norm: " << norm(this->residual_norm, constraint_complementarity) << std::endl;
    return norm(this->residual_norm, variable_complementarity, constraint_complementarity);
 }
 
