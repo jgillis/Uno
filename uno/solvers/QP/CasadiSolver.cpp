@@ -230,10 +230,12 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
          }
 
          if (direction.multipliers.lower_bounds[i] > 0.){
+            std::cout << "Active at lower bounds" << std::endl;
             direction.active_set.bounds.at_lower_bound.push_back(i);
          }
 
          if (direction.multipliers.upper_bounds[i] > 0.){
+            std::cout << "Active at upper bounds" << std::endl;
             direction.active_set.bounds.at_upper_bound.push_back(i);
          }
 
