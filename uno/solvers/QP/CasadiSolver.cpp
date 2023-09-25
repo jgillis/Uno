@@ -216,8 +216,8 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    // TODO: check signs (validate with BQPSolver answer)
    //       do we need to construct activate set? see BQPDSolver::analyze_constraints
 
-   std::cout << "Lagrange Multipliers bounds: " <<  res["lam_x"] << std::endl;
-   std::cout << "Lagrange Multipliers constraints: " <<  res["lam_a"] << std::endl;
+   // std::cout << "Lagrange Multipliers bounds: " <<  res["lam_x"] << std::endl;
+   // std::cout << "Lagrange Multipliers constraints: " <<  res["lam_a"] << std::endl;
 
    for (size_t i: Range(number_variables)) {
          direction.multipliers.lower_bounds[i] = std::max(0., -res["lam_x"].nonzeros()[i]);
@@ -235,12 +235,12 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
          }
 
          if (direction.multipliers.lower_bounds[i] > 0.){
-            std::cout << "Active at lower bounds" << std::endl;
+            // std::cout << "Active at lower bounds" << std::endl;
             direction.active_set.bounds.at_lower_bound.push_back(i);
          }
 
          if (direction.multipliers.upper_bounds[i] > 0.){
-            std::cout << "Active at upper bounds" << std::endl;
+            // std::cout << "Active at upper bounds" << std::endl;
             direction.active_set.bounds.at_upper_bound.push_back(i);
          }
 
