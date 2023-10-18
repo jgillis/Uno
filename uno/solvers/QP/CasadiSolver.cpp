@@ -176,6 +176,14 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    opts_conic["nlpsol"] = "ipopt";
    opts_conic["error_on_fail"] = false;
    opts_conic["nlpsol_options"] = opts_nlpsol;
+   opts_conic["dump_in"] = true;
+   opts_conic["dump_out"] = true;
+
+   qp_struct["a"].spy(uout());
+   qp_struct["h"].spy(uout());
+
+   Dict opts_fatrop;
+   opts_fatrop["N"] = 1;
 
    Function solver = conic("solver", "nlpsol", qp_struct, opts_conic);
    // Problem is solved here
