@@ -179,7 +179,7 @@ Direction CASADISolver::solve_QP(size_t number_variables, size_t number_constrai
    opts_conic["dump_in"] = true;
    opts_conic["dump_out"] = true;
 
-   uout() << "Hello are we here???" << std::endl;
+   std::cout << "Hello are we here???" << std::endl;
    qp_struct["a"].spy(uout());
    qp_struct["h"].spy(uout());
 
