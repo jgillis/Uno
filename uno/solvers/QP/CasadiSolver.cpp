@@ -365,8 +365,6 @@ SubproblemStatus CASADISolver::status_from_casadi_status(bool success, std::stri
       return SubproblemStatus::INFEASIBLE;
    }
    throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
-   }
-
 }
 
 Direction CASADISolver::solve_LP(size_t number_variables, size_t number_constraints, const std::vector<Interval>& variables_bounds,
