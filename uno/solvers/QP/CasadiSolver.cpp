@@ -343,18 +343,27 @@ SubproblemStatus CASADISolver::status_from_casadi_status(bool success, std::stri
    // throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
    // }
 
-   // Solver Ipopt
+   // // Solver Ipopt
+   // if (success == true){
+   //    return SubproblemStatus::OPTIMAL;
+   // } else {
+   //    if (casadi_status == "Infeasible_Problem_Detected") {
+   //       return SubproblemStatus::INFEASIBLE;
+   //    } else if (casadi_status == "Diverging_Iterates"){
+   //       return SubproblemStatus::UNBOUNDED_PROBLEM;
+   //    } else {
+   //       WARNING << YELLOW << " error: " << casadi_status << "\n" << RESET;
+   //       return SubproblemStatus::ERROR;
+   //    }
+   // throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
+   // }
+
+   // Solver Fatrop
    if (success == true){
       return SubproblemStatus::OPTIMAL;
    } else {
-      if (casadi_status == "Infeasible_Problem_Detected") {
-         return SubproblemStatus::INFEASIBLE;
-      } else if (casadi_status == "Diverging_Iterates"){
-         return SubproblemStatus::UNBOUNDED_PROBLEM;
-      } else {
-         WARNING << YELLOW << " error: " << casadi_status << "\n" << RESET;
-         return SubproblemStatus::ERROR;
-      }
+      return SubproblemStatus::INFEASIBLE;
+   }
    throw std::invalid_argument("The Casadi solver ifail is not consistent with the Uno status values");
    }
 
