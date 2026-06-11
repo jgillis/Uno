@@ -244,8 +244,14 @@ if(MUMPS_LIBRARY)
    target_link_libraries(uno_dependencies INTERFACE ${METIS_LIBRARY})
    target_include_directories(uno_dependencies SYSTEM INTERFACE ${METIS_INCLUDE_DIRS})
 
-   find_package(OpenMP REQUIRED)
-   target_link_libraries(uno_dependencies INTERFACE OpenMP::OpenMP_CXX)
+   # OpenMP is optional: FindOpenMP's REQUIRED probe fails on some cross
+   # toolchains (e.g. 32-bit dockcross can't locate OpenMP_pthread_LIBRARY).
+   find_package(OpenMP)
+   if(OpenMP_CXX_FOUND)
+      target_link_libraries(uno_dependencies INTERFACE OpenMP::OpenMP_CXX)
+   else()
+      message(STATUS "OpenMP not found; building Uno without it")
+   endif()
 
    message(STATUS "Found MUMPS")
 endif()
