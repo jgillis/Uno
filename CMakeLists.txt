@@ -240,6 +240,15 @@ if(SPRAL)
       target_sources(run_unotest PRIVATE unotest/functional_tests/SSIDSSolverTests.cpp)
    endif()
    link_to_uno(spral ${SPRAL})
+   # spral_ssids.h ships in SPRAL's include/ tree, not next to libspral, so
+   # link_to_uno's lib-dir include path does not cover it. Resolve the header
+   # dir separately (honours a parent-set SPRAL_INCLUDE_DIR, else the prefix path).
+   find_path(SPRAL_INCLUDE_DIR spral_ssids.h)
+   if(SPRAL_INCLUDE_DIR)
+      target_include_directories(uno_dependencies SYSTEM INTERFACE ${SPRAL_INCLUDE_DIR})
+   else()
+      message(WARNING "libspral found but spral_ssids.h not found; set SPRAL_INCLUDE_DIR.")
+   endif()
 endif()
 
 # helper function: resolve a mixed list of -lflags and relative paths to absolute paths
