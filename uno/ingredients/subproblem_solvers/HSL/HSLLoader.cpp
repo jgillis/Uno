@@ -48,7 +48,6 @@ namespace uno {
       void* raw_symbol(LibraryHandle handle, const char* symbol) { return dlsym(handle, symbol); }
 #endif
 
-      bool load_attempted = false;
       LibraryHandle hsl_handle = nullptr;
 
       // Resolve a Fortran symbol trying the manglings IPOPT tries, so the runtime
@@ -74,10 +73,11 @@ namespace uno {
    } // anonymous namespace
 
    bool load_hsl_library(const std::string& library_name) {
-      if (load_attempted) {
-         return hsl_handle != nullptr;
+      // cache success only: a failed probe (e.g. the early available_solvers() check
+      // with no name) must not block a later load with an explicit hsllib path.
+      if (hsl_handle != nullptr) {
+         return true;
       }
-      load_attempted = true;
 
       std::string name = library_name;
       if (name.empty()) {
