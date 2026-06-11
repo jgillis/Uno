@@ -345,6 +345,9 @@ if(APPLE)
    list(REMOVE_ITEM FORTRAN_LIBS emutls_w)
    list(REMOVE_ITEM FORTRAN_LIBS heapt_w)
 endif()
+# Add the Fortran runtime search dirs so -lgfortran resolves with a non-system
+# (e.g. conda) gfortran on macOS.
+target_link_directories(uno_dependencies INTERFACE ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES})
 target_link_libraries(uno_dependencies INTERFACE ${FORTRAN_LIBS})
 
 target_link_libraries(compiled_uno_files PUBLIC uno_dependencies)
