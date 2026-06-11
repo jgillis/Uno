@@ -264,6 +264,12 @@ if(SPRAL)
       target_sources(run_unotest PRIVATE unotest/functional_tests/SSIDSSolverTests.cpp)
    endif()
    link_to_uno(spral ${SPRAL})
+   # static libspral needs METIS after it on the link line (Windows DLLs forbid undefined refs)
+   if(METIS_LIBRARY)
+      target_link_libraries(uno_dependencies INTERFACE ${METIS_LIBRARY})
+   elseif(METIS)
+      target_link_libraries(uno_dependencies INTERFACE ${METIS})
+   endif()
    # spral_ssids.h ships in SPRAL's include/ tree, not next to libspral, so
    # link_to_uno's lib-dir include path does not cover it. Resolve the header
    # dir separately (honours a parent-set SPRAL_INCLUDE_DIR, else the prefix path).
