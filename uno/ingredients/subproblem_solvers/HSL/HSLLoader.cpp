@@ -2,9 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project directory for details.
 
 #include "HSLLoader.hpp"
+#include <cctype>
 #include <cstdlib>
+#include <string>
 #include "tools/Logger.hpp"
-#include "fortran_interface.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -12,10 +13,7 @@
 #include <dlfcn.h>
 #endif
 
-// stringize the Fortran-mangled symbol name (e.g. FC_GLOBAL(ma57id, MA57ID) -> "ma57id_")
-#define UNO_STRINGIZE_(x) #x
-#define UNO_STRINGIZE(x) UNO_STRINGIZE_(x)
-
+// default library name: libhsl.<platform shared-lib extension> (matches IPOPT's hsllib)
 #if defined(_WIN32)
 #define UNO_HSL_DEFAULT_LIBRARY "libhsl.dll"
 #elif defined(__APPLE__)
@@ -40,21 +38,46 @@ namespace uno {
 #ifdef _WIN32
       using LibraryHandle = HMODULE;
       LibraryHandle open_library(const char* name) { return LoadLibraryA(name); }
-      void* load_symbol(LibraryHandle handle, const char* symbol) {
+      void* raw_symbol(LibraryHandle handle, const char* symbol) {
          return reinterpret_cast<void*>(GetProcAddress(handle, symbol));
       }
 #else
       using LibraryHandle = void*;
-      LibraryHandle open_library(const char* name) { return dlopen(name, RTLD_LAZY | RTLD_GLOBAL); }
-      void* load_symbol(LibraryHandle handle, const char* symbol) { return dlsym(handle, symbol); }
+      LibraryHandle open_library(const char* name) {
+         // match upstream IPOPT: resolve now, do not export the HSL symbols globally
+         int flags = RTLD_NOW;
+#if defined(UNO_HSL_DEEPBIND) && defined(RTLD_DEEPBIND)
+         // opt-in (HSL_RUNTIME_DEEPBIND): mirror the jgillis/Ipopt-1 .mod patch that
+         // ORs in RTLD_DEEPBIND so libhsl prefers its own symbols. glibc-only.
+         flags |= RTLD_DEEPBIND;
+#endif
+         return dlopen(name, flags);
+      }
+      void* raw_symbol(LibraryHandle handle, const char* symbol) { return dlsym(handle, symbol); }
 #endif
 
       bool load_attempted = false;
       LibraryHandle hsl_handle = nullptr;
 
+      // Resolve a Fortran symbol trying the manglings IPOPT tries, so the runtime
+      // libhsl can have been built by any compiler regardless of how Uno was:
+      // base, base_, lower_, lower, UPPER_, UPPER.
+      void* resolve_symbol(LibraryHandle handle, const std::string& base) {
+         std::string lower = base, upper = base;
+         for (char& c: lower) { c = static_cast<char>(std::tolower(static_cast<unsigned char>(c))); }
+         for (char& c: upper) { c = static_cast<char>(std::toupper(static_cast<unsigned char>(c))); }
+         const std::string candidates[] = {base, base + "_", lower + "_", lower, upper + "_", upper};
+         for (const std::string& candidate: candidates) {
+            if (void* symbol = raw_symbol(handle, candidate.c_str())) {
+               return symbol;
+            }
+         }
+         return nullptr;
+      }
+
       template <typename FunctionPointer>
-      void resolve(LibraryHandle handle, FunctionPointer& function_pointer, const char* symbol) {
-         function_pointer = reinterpret_cast<FunctionPointer>(load_symbol(handle, symbol));
+      void resolve(LibraryHandle handle, FunctionPointer& function_pointer, const std::string& base) {
+         function_pointer = reinterpret_cast<FunctionPointer>(resolve_symbol(handle, base));
       }
    } // anonymous namespace
 
@@ -81,16 +104,16 @@ namespace uno {
       }
       DEBUG << "Uno: loaded the HSL library '" << name << "' at runtime\n";
 
-      resolve(hsl_handle, hsl_ma57id, UNO_STRINGIZE(FC_GLOBAL(ma57id, MA57ID)));
-      resolve(hsl_handle, hsl_ma57ad, UNO_STRINGIZE(FC_GLOBAL(ma57ad, MA57AD)));
-      resolve(hsl_handle, hsl_ma57bd, UNO_STRINGIZE(FC_GLOBAL(ma57bd, MA57BD)));
-      resolve(hsl_handle, hsl_ma57cd, UNO_STRINGIZE(FC_GLOBAL(ma57cd, MA57CD)));
-      resolve(hsl_handle, hsl_ma57dd, UNO_STRINGIZE(FC_GLOBAL(ma57dd, MA57DD)));
-      resolve(hsl_handle, hsl_ma57ed, UNO_STRINGIZE(FC_GLOBAL(ma57ed, MA57ED)));
-      resolve(hsl_handle, hsl_ma27id, UNO_STRINGIZE(FC_GLOBAL(ma27id, MA27ID)));
-      resolve(hsl_handle, hsl_ma27ad, UNO_STRINGIZE(FC_GLOBAL(ma27ad, MA27AD)));
-      resolve(hsl_handle, hsl_ma27bd, UNO_STRINGIZE(FC_GLOBAL(ma27bd, MA27BD)));
-      resolve(hsl_handle, hsl_ma27cd, UNO_STRINGIZE(FC_GLOBAL(ma27cd, MA27CD)));
+      resolve(hsl_handle, hsl_ma57id, "ma57id");
+      resolve(hsl_handle, hsl_ma57ad, "ma57ad");
+      resolve(hsl_handle, hsl_ma57bd, "ma57bd");
+      resolve(hsl_handle, hsl_ma57cd, "ma57cd");
+      resolve(hsl_handle, hsl_ma57dd, "ma57dd");
+      resolve(hsl_handle, hsl_ma57ed, "ma57ed");
+      resolve(hsl_handle, hsl_ma27id, "ma27id");
+      resolve(hsl_handle, hsl_ma27ad, "ma27ad");
+      resolve(hsl_handle, hsl_ma27bd, "ma27bd");
+      resolve(hsl_handle, hsl_ma27cd, "ma27cd");
       return true;
    }
 
