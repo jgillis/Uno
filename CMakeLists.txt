@@ -27,6 +27,20 @@ include(FortranCInterface)
 FortranCInterface_HEADER(${CMAKE_BINARY_DIR}/include/fortran_interface.h
         MACRO_NAMESPACE "FC_"
         SYMBOL_NAMESPACE "FC_")
+# FortranCInterface symbol detection can fail on macOS; fall back to the
+# standard gfortran/flang trailing-underscore mangling.
+if(NOT FortranCInterface_GLOBAL_FOUND)
+   message(WARNING "FortranCInterface detection failed; assuming gfortran name mangling")
+   file(WRITE ${CMAKE_BINARY_DIR}/include/fortran_interface.h
+"#ifndef FC_HEADER_INCLUDED
+#define FC_HEADER_INCLUDED
+#define FC_GLOBAL(name,NAME) name##_
+#define FC_GLOBAL_(name,NAME) name##_
+#define FC_MODULE(mod_name,name, mod_NAME,NAME) __##mod_name##_MOD_##name
+#define FC_MODULE_(mod_name,name, mod_NAME,NAME) __##mod_name##_MOD_##name
+#endif
+")
+endif()
 
 # compile options
 if (MSVC)
