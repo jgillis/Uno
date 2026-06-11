@@ -133,9 +133,6 @@ endfunction()
 # IPOPT-style runtime loading: don't link libhsl, dlopen it on first use and
 # resolve MA27/MA57 by symbol name (see uno/ingredients/subproblem_solvers/HSL).
 option(HSL_RUNTIME_LOADING "Load HSL (MA27/MA57) at runtime via dlopen instead of linking" OFF)
-# Opt-in: OR RTLD_DEEPBIND into the dlopen flags (mirrors the jgillis/Ipopt-1 .mod
-# patch; upstream IPOPT uses plain RTLD_NOW). glibc-only, off by default.
-option(HSL_RUNTIME_DEEPBIND "dlopen libhsl with RTLD_DEEPBIND (HSL_RUNTIME_LOADING only)" OFF)
 set(_compile_ma57 OFF)
 set(_compile_ma27 OFF)
 if(HSL_RUNTIME_LOADING)
@@ -143,10 +140,6 @@ if(HSL_RUNTIME_LOADING)
    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/HSL/HSLLoader.cpp)
    target_compile_definitions(uno_dependencies INTERFACE HAS_HSL HSL_RUNTIME_LOADING)
    target_link_libraries(uno_dependencies INTERFACE ${CMAKE_DL_LIBS})
-   if(HSL_RUNTIME_DEEPBIND)
-      message(STATUS "HSL: dlopen with RTLD_DEEPBIND")
-      target_compile_definitions(uno_dependencies INTERFACE UNO_HSL_DEEPBIND)
-   endif()
    set(_compile_ma57 ON)
    set(_compile_ma27 ON)
 else()

@@ -43,16 +43,8 @@ namespace uno {
       }
 #else
       using LibraryHandle = void*;
-      LibraryHandle open_library(const char* name) {
-         // match upstream IPOPT: resolve now, do not export the HSL symbols globally
-         int flags = RTLD_NOW;
-#if defined(UNO_HSL_DEEPBIND) && defined(RTLD_DEEPBIND)
-         // opt-in (HSL_RUNTIME_DEEPBIND): mirror the jgillis/Ipopt-1 .mod patch that
-         // ORs in RTLD_DEEPBIND so libhsl prefers its own symbols. glibc-only.
-         flags |= RTLD_DEEPBIND;
-#endif
-         return dlopen(name, flags);
-      }
+      // match upstream IPOPT: resolve now, do not export the HSL symbols globally
+      LibraryHandle open_library(const char* name) { return dlopen(name, RTLD_NOW); }
       void* raw_symbol(LibraryHandle handle, const char* symbol) { return dlsym(handle, symbol); }
 #endif
 
