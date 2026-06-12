@@ -281,7 +281,7 @@ extern "C" {
    bool uno_set_initial_dual_iterate(void* model, const double* initial_dual_iterate);
 
    // creates the Uno solver.
-   void* uno_create_solver();
+   void* uno_create_solver(void);
 
    // sets a particular option in the Uno solver.
    // takes as inputs the name of the option and the value to which it should be set.
@@ -320,7 +320,7 @@ extern "C" {
    // [optional]
    // resets the logger stream to the standard output
    // returns true if it succeeded, false otherwise.
-   bool uno_reset_logger_stream();
+   bool uno_reset_logger_stream(void);
 
    // optimizes a given model using the Uno solver and given options.
    void uno_optimize(void* solver, void* model);
